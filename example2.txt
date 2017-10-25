@@ -1,19 +1,11 @@
 var i;
-	procedure p1()
+	procedure p1(a,b)
 		var j;
-		procedure p2()
-			var k;
-			begin
-				k:=3;
-				j:=2;
-				i:=1;
-			end;
 		begin
-			j := 5;
-			i := 4;
-			call p2();
+			j := a;
+			i := b;
 		end;
 	begin
 		i :=1;
-		call p1();
+		call p1(3,4);
 	end.

@@ -468,7 +468,7 @@ void factor(symset fsys)
 			expression(fsys);
 			gen(OPR, 0, OPR_NOT);
 		}
-		test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
+		test(fsys, createset(SYM_LPAREN,SYM_COMMA,SYM_NULL), 23);
 	} // while
 } // factor
 
@@ -644,12 +644,17 @@ void para_list(symset fsys)
 {
 	while (sym == SYM_IDENTIFIER)
 	{
-//		enter(ID_VARIABLE);
+		enter(ID_VARIABLE);
 		getsym();
-		if (sym == ')')
+		if (sym == SYM_RPAREN)
 		{
 			return;
 		}
+		if (sym != SYM_COMMA)
+		{
+			error(26);
+		}
+		getsym();
 	}
 	//getsym();
 }
@@ -721,30 +726,30 @@ void statement(symset fsys)
 		{
 			error(27);
 		}
-		getsym();
 		//ZF add:
 		//Following codes give the value to function arguments
 		//Treat arguments like local vars!
 
-		//mask* mk;
+		//mask* mk
 
-		int j = i;
-		int procedure_i = i;
+		int j = 3;
 //		int para_dx = 3;
-		if (sym != SYM_RPAREN)
-		{
-			do {
-				//mk = (mask*)&table[++j];
-				logic_or(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)));
-				//gen(STO, level - mk->level, mk->address);
-				//getsym();
-			} while (sym == SYM_COMMA);
-		}
+		do {
+			getsym();
+			if (sym == SYM_RPAREN)
+			{
+				break;
+			}
+			//mk = (mask*)&table[++j];
+			logic_or(uniteset(fsys, createset(SYM_COMMA,SYM_RPAREN, SYM_NULL)));
+			gen(MOV, 0, j++);
+			//getsym();
+		} while (sym == SYM_COMMA);
 		if (sym != SYM_RPAREN)
 		{
 			error(22);
 		}
-		mk = (mask*)&table[procedure_i];
+		mk = (mask*)&table[i];
 		gen(CAL, level - mk->level, mk->address);
 		getsym();
 	} 
@@ -756,26 +761,28 @@ void statement(symset fsys)
 		logic_or(set);
 		destroyset(set1);
 		destroyset(set);
-		if (sym == SYM_THEN)
+/*		if (sym == SYM_THEN)
 		{
 			getsym();
 		}
 		else
 		{
 			error(16); // 'then' expected.
-		}
+		}*/
 		cx1 = cx;
 		gen(JPC, 0, 0);
 		statement(fsys);
-		code[cx1].a = cx;	
-	}
-
+		code[cx1].a = cx;
+		//ZF add 
 	//ZF add:
 	//Not complete
-	else if (sym == SYM_ELSE)
+	if (sym == SYM_ELSE)
 	{
 		getsym();
+
 	}
+
+}
 	else if (sym == SYM_BEGIN)
 	{ // block
 		getsym();
@@ -1161,6 +1168,13 @@ void interpret()
 			b = top + 1;
 			pc = i.a;
 			break;
+		//ZF add:
+		//Use this to pass function arguments to the local_var segment 
+		//Before CAL 
+		case MOV:
+			stack[top + i.a] = stack[top];
+			top--;
+			break;
 		case INT:
 			top += i.a;
 			break;
@@ -1217,7 +1231,7 @@ void main ()
 	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
 	//ZF note:
 	//A variable or A number or Left Parentheis or Minus or NULL
-	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS,SYM_ODD,SYM_NOT, SYM_NULL);
+	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS,SYM_ODD,SYM_NOT,SYM_NULL);
 
 	err = cc = cx = ll = 0; // initialize global variables
 	ch = ' ';

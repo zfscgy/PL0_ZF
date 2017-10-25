@@ -145,7 +145,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PL0.h" />
+    <ClInclude Include="pl0.h" />
     <ClInclude Include="set.h" />
   </ItemGroup>
   <ItemGroup>

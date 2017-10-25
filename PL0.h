@@ -72,7 +72,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, MOV
 };
 
 enum oprcode
@@ -123,8 +123,8 @@ char* err_msg[] =
 /* 23 */    "The symbol can not be followed by a factor.",
 /* 24 */    "The symbol can not be as the beginning of an expression.",
 /* 25 */    "The number is too great.",
-/* 26 */    "",
-/* 27 */    "'(' Expected",
+/* 26 */    "',' expected",
+/* 27 */    "'(' expected",
 /* 28 */    "",
 /* 29 */    "",
 /* 30 */    "",
@@ -183,10 +183,10 @@ char csym[NSYM + 1] =
 	'&','|','^','%'
 };
 
-#define MAXINS   8
+#define MAXINS   9
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "MOV"
 };
 
 typedef struct

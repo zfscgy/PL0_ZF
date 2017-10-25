@@ -18,10 +18,10 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PL0.h">
+    <ClInclude Include="set.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="set.h">
+    <ClInclude Include="pl0.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
