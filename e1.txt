@@ -1,0 +1,11 @@
+var result;
+procedure fact(n) // no semicolon here! 
+	begin
+	if (n == 1 || n == 0) 
+		return 1;
+	else 
+		return n * fact(n-1);
+	end; // no semicolon here!
+begin
+	result := fact(5); 
+end.

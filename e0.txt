@@ -1,0 +1,8 @@
+var i;
+precedure p(a)
+	begin
+		return a;
+	end;
+begin
+	i:=p(2333)
+end.

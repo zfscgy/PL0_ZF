@@ -1,0 +1,11 @@
+var result;
+procedure fact(n) // no semicolon here! 
+	begin
+	if (n == 1 || n == 0) return 1; // keyword ¡®then¡¯ is deleted!
+	else return n * fact(n-1);? // ¡®else¡¯ sub-statement added
+	// otherwise, return n * fact(n-1) is ok!
+	end; // no semicolon here!
+begin
+	result := fact(5); 
+// or a statement like ¡®print(fact(5));¡¯ is welcome, if implemented!? 
+end.
