@@ -23,6 +23,12 @@ symset uniteset(symset s1, symset s2)
 			p->elem = s1->elem;
 			s1 = s1->next;
 		}
+		else if (s1->elem == s2->elem)
+		{
+			p->elem = s1->elem;
+			s1 = s1->next;
+			s2 = s2->next;
+		}
 		else
 		{
 			p->elem = s2->elem;
@@ -61,7 +67,10 @@ void setinsert(symset s, int elem)
 	{
 		p = p->next;
 	}
-	
+	if (p->next&&p->next->elem == elem)
+	{
+		return;
+	}
 	q = (snode*) malloc(sizeof(snode));
 	q->elem = elem;
 	q->next = p->next;

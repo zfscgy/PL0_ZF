@@ -16,39 +16,39 @@
 
 enum symtype
 {
-	SYM_NULL,
+	SYM_NULL,       //0
 	SYM_IDENTIFIER, //Varibles
 	SYM_NUMBER,
 	SYM_PLUS,
 	SYM_MINUS,
-	SYM_TIMES,
+	SYM_TIMES,      //5
 	SYM_SLASH,
 	SYM_ODD,
 	SYM_EQU,
 	SYM_NEQ,
-	SYM_LES,
+	SYM_LES,        //10
 	SYM_LEQ,
 	SYM_GTR,
 	SYM_GEQ,
 	SYM_LPAREN,
-	SYM_RPAREN,
+	SYM_RPAREN,     //15
 	SYM_COMMA,
 	SYM_SEMICOLON,
 	SYM_PERIOD, //symbol "."
 	SYM_BECOMES,
-    SYM_BEGIN,
+    SYM_BEGIN,      //20
 	SYM_END,
 	SYM_IF,
 	SYM_THEN,
 	SYM_WHILE,
-	SYM_DO,
+	SYM_DO,         //25
 	SYM_CALL,
 	SYM_CONST,
 	SYM_VAR, //reserved word "var"
 	SYM_PROCEDURE,
 
 	//ZF add
-	SYM_ELSE,
+	SYM_ELSE,       //30
 	SYM_ELIF,
 	SYM_RETURN,
 	SYM_FOR,
@@ -72,7 +72,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, MOV
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, MOV,POP
 };
 
 enum oprcode
@@ -125,8 +125,8 @@ char* err_msg[] =
 /* 25 */    "The number is too great.",
 /* 26 */    "',' expected",
 /* 27 */    "'(' expected",
-/* 28 */    "",
-/* 29 */    "",
+/* 28 */    "'end' expected",
+/* 29 */    "'begin' expected",
 /* 30 */    "",
 /* 31 */    "",
 /* 32 */    "There are too many levels."
@@ -164,29 +164,29 @@ int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,
-	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR
+	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,
 };
 
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
-	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
+	SYM_LPAREN, SYM_RPAREN, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
 	SYM_LBRACKET,SYM_RBRACKET,SYM_NOT,
 	SYM_BITAND,SYM_BITOR,SYM_XOR,SYM_MOD,
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';',
+	' ', '+', '-', '*', '/', '(', ')', ',', '.', ';',
 	'[',']','!',
 	//ZF add:
 	'&','|','^','%'
 };
 
-#define MAXINS   9
+#define MAXINS   10
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "MOV"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "MOV", "POP",
 };
 
 typedef struct
