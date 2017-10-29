@@ -668,13 +668,26 @@ int JPCs[30];
 void logic_and(symset fsys)
 {
 	int i = 0;
+	int j;
 	bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+	JPCs[i++] = cx;
+	gen(JPC, 0, 0);
+	gen(POP, 0, -1);
 	while(sym == SYM_AND)
 	{
 		getsym();
 		bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
 		gen(OPR, 0, OPR_AND);
+		JPCs[i++] = cx;
+		gen(JPC, 0, 0);
+		gen(POP, 0, -1);
 	}
+	gen(JMP, 0, cx + 2);
+	for (j = 0; j < i; j++)
+	{
+		code[JPCs[j]].a = cx;
+	}
+	gen(LIT, 0, 0);
 }
 //ZF add:
 //Or expression
@@ -714,7 +727,7 @@ void logic_or(symset fsys)
 		gen(JPC, 1, 0);
 		gen(POP, 0, -1);
 	}
-	gen(JMP, 0, cx + 1);
+	gen(JMP, 0, cx + 2);
 	for (j = 0; j < i; j++)
 	{
 		code[JPCs[j]].a = cx;
