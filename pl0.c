@@ -682,12 +682,19 @@ void logic_and(symset fsys)
 		gen(JPC, 0, 0);
 		gen(POP, 0, -1);
 	}
-	gen(JMP, 0, cx + 2);
-	for (j = 0; j < i; j++)
+	if (i != 1)
 	{
-		code[JPCs[j]].a = cx;
+		gen(JMP, 0, cx + 2);
+		for (j = 0; j < i; j++)
+		{
+			code[JPCs[j]].a = cx;
+		}
+		gen(LIT, 0, 0);
 	}
-	gen(LIT, 0, 0);
+	else
+	{
+		cx -= 2;
+	}
 }
 //ZF add:
 //Or expression
