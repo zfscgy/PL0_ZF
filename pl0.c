@@ -391,6 +391,8 @@ void vardeclaration(void)
 	}
 } // vardeclaration
 
+
+
 //////////////////////////////////////////////////////////////////////
 void listcode(int from, int to)
 {
@@ -422,7 +424,7 @@ void factor(symset fsys)
 	{
 		if (sym == SYM_IDENTIFIER)
 		{
-			mask* mk;//Stores the JMP code
+//			mask* mk;//Stores the JMP code
 			if ((i = position(id)) == 0)
 			{
 				error(11); // Undeclared identifier.
@@ -734,12 +736,19 @@ void logic_or(symset fsys)
 		gen(JPC, 1, 0);
 		gen(POP, 0, -1);
 	}
-	gen(JMP, 0, cx + 2);
-	for (j = 0; j < i; j++)
+	if (i != 1)
 	{
-		code[JPCs[j]].a = cx;
+		gen(JMP, 0, cx + 2);
+		for (j = 0; j < i; j++)
+		{
+			code[JPCs[j]].a = cx;
+		}
+		gen(LIT, 0, 1);
 	}
-	gen(LIT, 0, 1);
+	else
+	{
+		cx -= 2;
+	}
 }
 
 void para_list(symset fsys)
@@ -760,7 +769,40 @@ void para_list(symset fsys)
 	}
 	//getsym();
 }
+//////////////////////////////////////////////////////////////////////
+void functioncall(int i)
+{
+	if (sym != SYM_LPAREN)
+	{
+		error(27);
+	}
+	//ZF add:
+	//Following codes give the value to function arguments
+	//Treat arguments like local vars!
 
+	//mask* mk
+
+	int j = 3;
+	//		int para_dx = 3;
+	do {
+		getsym();
+		if (sym == SYM_RPAREN)
+		{
+			break;
+		}
+		//mk = (mask*)&table[++j];
+		logic_or(createset(SYM_COMMA, SYM_RPAREN, SYM_NULL));
+		gen(MOV, 0, j++);
+		//getsym();
+	} while (sym == SYM_COMMA);
+	if (sym != SYM_RPAREN)
+	{
+		error(22);
+	}
+	mask* mk = (mask*)&table[i];
+	gen(CAL, level - mk->level, mk->address);
+	getsym();
+}
 //////////////////////////////////////////////////////////////////////
 //ZF note:
 //It is a statement which like "i := 1"
@@ -823,6 +865,7 @@ void statement(symset fsys)
 			}
 			getsym();
 		}
+		/*
 		if (sym != SYM_LPAREN)
 		{
 			error(27);
@@ -852,7 +895,7 @@ void statement(symset fsys)
 		}
 		mk = (mask*)&table[i];
 		gen(CAL, level - mk->level, mk->address);
-		getsym();
+		getsym();*/
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
