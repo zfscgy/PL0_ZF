@@ -415,6 +415,7 @@ void factor(symset fsys)
 {
 //	void expression(symset fsys);
 	void logic_or(symset fsys);
+	void functioncall(int i);
 	int i;
 	symset set;
 	
@@ -444,7 +445,8 @@ void factor(symset fsys)
 					//ZF modified: Procedure can be a factor
 				case ID_PROCEDURE:
 					getsym();
-					if (sym != SYM_LPAREN)
+					functioncall(i);
+					/*if (sym != SYM_LPAREN)
 					{
 						error(27);
 					}
@@ -472,7 +474,7 @@ void factor(symset fsys)
 						error(22);
 					}
 					mk = (mask*)&table[i];
-					gen(CAL, level - mk->level, mk->address);
+					gen(CAL, level - mk->level, mk->address);*/
 					break;
 				} // switch
 			}
@@ -665,10 +667,10 @@ void bit_or(symset fsys)
 }
 //ZF add:
 //Store the JPC codes
-int JPCs[30];
 //And expression
 void logic_and(symset fsys)
 {
+	int JPCs[30];
 	int i = 0;
 	int j;
 	bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
@@ -721,6 +723,7 @@ void logic_and(symset fsys)
 */
 void logic_or(symset fsys)
 {
+	int JPCs[30];
 	int i = 0;
 	int j;
 	logic_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)));
@@ -770,7 +773,7 @@ void para_list(symset fsys)
 	//getsym();
 }
 //////////////////////////////////////////////////////////////////////
-void functioncall(int i)
+void functioncall(int i) //i is the id of procedure identifier
 {
 	if (sym != SYM_LPAREN)
 	{
@@ -865,6 +868,8 @@ void statement(symset fsys)
 			}
 			getsym();
 		}
+		functioncall(i);
+		gen(POP, 0, 1);
 		/*
 		if (sym != SYM_LPAREN)
 		{
@@ -1419,6 +1424,7 @@ void main ()
 	if ((infile = fopen(s, "r")) == NULL)
 	{
 		printf("File %s can't be opened.\n", s);
+		system("pause");
 		exit(1);
 	}
 
