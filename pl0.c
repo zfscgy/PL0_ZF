@@ -296,7 +296,7 @@ int dx;  // data allocation index
 void enter(int kind)
 {
 	mask* mk;
-
+	int offset = 1;
 	tx++;
 	//ZD add: a new var entered
 	///
@@ -328,6 +328,17 @@ void enter(int kind)
 		mk = (mask*) &table[tx];
 		mk->level = level;
 		break;
+	case ID_ARRAY:
+		mk = (mask*)&table[tx];
+		mk->level = level;
+		mk->address = dx;
+		mk->dimension = arrayInfo[0];
+		for (size_t i = 0; i < arrayInfo[0]; i++)
+		{
+			offset *= arrayInfo[i + 1];
+			mk->indices[i] = arrayInfo[i + 1];
+		}
+		dx += offset;
 	} // switch
 } // enter
 
@@ -391,7 +402,47 @@ void vardeclaration(void)
 	}
 } // vardeclaration
 
-
+///////////////////////////////////////////////////////////////////////
+void arraydeclaration()
+{
+	int d = 0;
+	if (sym == SYM_IDENTIFIER)
+	{
+		getsym();
+		if (sym != SYM_LBRACKET)
+		{
+			error(30);
+		}
+		else
+		{
+			do {
+				getsym();
+				if (sym != SYM_NUMBER)
+				{
+				}
+				else
+				{
+					arrayInfo[++d] = num;
+				}
+				getsym();
+			} while (sym == SYM_COMMA);
+			arrayInfo[0] = d;
+			if (sym != SYM_RBRACKET)
+			{
+				error(31);
+			}
+			else
+			{
+				getsym();
+			}
+			enter(ID_ARRAY);
+		}
+	}
+	else
+	{
+		error(4);
+	}
+}
 
 //////////////////////////////////////////////////////////////////////
 void listcode(int from, int to)
@@ -405,7 +456,33 @@ void listcode(int from, int to)
 	}
 	printf("\n");
 } // listcode
-
+//////////////////////////////////////////////////////////////////////
+void arrayposition(int i)
+{
+	void logic_or(symset);
+	mask* mk = (mask*)&table[i];
+	if (sym != SYM_LBRACKET)
+	{
+		error(30);
+	}
+	gen(LIT, 0, 0);
+	for (size_t d = 0; d < mk->dimension; d++)
+	{
+		getsym();
+		logic_or(createset(SYM_COMMA, SYM_RBRACKET, SYM_NULL));
+		for (size_t dl = d + 1; dl < mk->dimension; dl++)
+		{
+			gen(LIT, 0, mk->indices[dl]);
+			gen(OPR, 0, OPR_MUL);
+		}
+		gen(OPR, 0, OPR_ADD);
+	}
+	if (sym != SYM_RBRACKET)
+	{
+		error(31);
+	}
+	getsym();
+}
 //////////////////////////////////////////////////////////////////////
 //ZF note:
 //The most prior expr
@@ -475,6 +552,13 @@ void factor(symset fsys)
 					}
 					mk = (mask*)&table[i];
 					gen(CAL, level - mk->level, mk->address);*/
+					break;
+				case ID_ARRAY:
+					mk = (mask*)&table[i];
+					getsym();
+					arrayposition(i);
+					gen(LODS, level - mk->level, mk->address);
+					getsym();
 					break;
 				} // switch
 			}
@@ -823,25 +907,35 @@ void statement(symset fsys)
 		{
 			error(11); // Undeclared identifier.
 		}
-		else if (table[i].kind != ID_VARIABLE)
-		{
-			error(12); // Illegal assignment.
-			i = 0;
-		}
-		getsym();
-		if (sym == SYM_BECOMES)
+		else if (table[i].kind == ID_VARIABLE)
 		{
 			getsym();
+			if (sym == SYM_BECOMES)
+			{
+				getsym();
+			}
+			else
+			{
+				error(13); // ':=' expected.
+			}
+			logic_or(fsys);
+			mk = (mask*)&table[i];
+			if (i)
+			{
+				gen(STO, level - mk->level, mk->address);
+			}
 		}
-		else
+		else if (table[i].kind = ID_ARRAY)
 		{
-			error(13); // ':=' expected.
-		}
-		logic_or(fsys);
-		mk = (mask*) &table[i];
-		if (i)
-		{
-			gen(STO, level - mk->level, mk->address);
+			getsym();
+			arrayposition(i);
+			if (sym == SYM_BECOMES)
+			{
+				getsym();
+				logic_or(fsys);
+			}
+			mk = (mask*)&table[i];
+			gen(STOS, level - mk->level, mk->address);
 		}
 	}
 	else if (sym == SYM_CALL)
@@ -1088,23 +1182,52 @@ void block(symset fsys)
 		if (sym == SYM_VAR)
 		{ // variable declarations
 			getsym();
-			do
+			if (sym != SYM_LBRACKET)
 			{
-				vardeclaration();
-				while (sym == SYM_COMMA)
+				do
 				{
-					getsym();
 					vardeclaration();
-				}
-				if (sym == SYM_SEMICOLON)
+					while (sym == SYM_COMMA)
+					{
+						getsym();
+						vardeclaration();
+					}
+					if (sym == SYM_SEMICOLON)
+					{
+						getsym();
+					}
+					else
+					{
+						error(5); // Missing ',' or ';'.
+					}
+				} while (sym == SYM_IDENTIFIER);
+			}
+			else
+			{
+				getsym();
+				if (sym != SYM_RBRACKET)
 				{
-					getsym();
+					error(31);
 				}
-				else
-				{
-					error(5); // Missing ',' or ';'.
-				}
-			} while (sym == SYM_IDENTIFIER);
+				getsym();
+				do {
+					arraydeclaration();
+					while (sym == SYM_COMMA)
+					{
+						getsym();
+						arraydeclaration();
+					}
+					if (sym == SYM_SEMICOLON)
+					{
+						getsym();
+					}
+					else
+					{
+						error(5);
+					}
+					
+				} while (sym == SYM_IDENTIFIER);
+			}
 		} // if
 	}
 	while (inset(sym, declbegsys) && sym!=SYM_PROCEDURE);
@@ -1344,6 +1467,9 @@ void interpret()
 		case LOD:
 			stack[++top] = stack[base(stack, b, i.l) + i.a];
 			break;
+		case LODS:
+			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
+			break;
 		case STO:
 			//ZF debug:
 			printf("Store to Addr:%d   %d\n",i.a, base(stack, b, i.l) + i.a);
@@ -1351,6 +1477,12 @@ void interpret()
 			stack[base(stack, b, i.l) + i.a] = stack[top];
 			printf("%d\n", stack[top]);
 			top--;
+			break;
+		case STOS:
+			printf("Store to Addr:%d   %d\n", i.a, base(stack, b, i.l) + i.a + stack[top - 1]);
+			stack[base(stack, b, i.l) + i.a + stack[top - 1]] = stack[top];
+			printf("%d\n", stack[top]);
+			top -= 2; 
 			break;
 		case CAL:
 			//For find the actual mother function's base

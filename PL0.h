@@ -67,12 +67,12 @@ enum symtype
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE, ID_ARRAY, 
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, MOV,POP
+	LIT, OPR, LOD,LODS, STO,STOS, CAL, INT, JMP, JPC, MOV,POP
 };
 
 enum oprcode
@@ -127,8 +127,8 @@ char* err_msg[] =
 /* 27 */    "'(' expected",
 /* 28 */    "'end' expected",
 /* 29 */    "'begin' expected",
-/* 30 */    "",
-/* 31 */    "",
+/* 30 */    "'[' expected",
+/* 31 */    "']' expected",
 /* 32 */    "There are too many levels."
 };
 
@@ -144,7 +144,7 @@ int  err;
 int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
-
+unsigned char arrayInfo[5]; //current array
 char line[80];
 
 instruction code[CXMAX];
@@ -183,17 +183,20 @@ char csym[NSYM + 1] =
 	'&','|','^','%'
 };
 
-#define MAXINS   10
+#define MAXINS   12
+#define MAXD	 4
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "MOV", "POP",
+	"LIT", "OPR", "LOD","LODS", "STO", "STOS", "CAL", "INT", "JMP", "JPC", "MOV", "POP",
 };
 
 typedef struct
 {
 	char name[MAXIDLEN + 1];
+	unsigned char dimension;
 	int  kind;
 	int  value;
+	unsigned char indices[MAXD];
 } comtab;
 
 comtab table[TXMAX];
@@ -201,9 +204,11 @@ comtab table[TXMAX];
 typedef struct
 {
 	char  name[MAXIDLEN + 1];
+	unsigned char dimension;
 	int   kind;
 	short level;
 	short address;
+	unsigned char indices[MAXD];
 } mask;
 
 FILE* infile;
