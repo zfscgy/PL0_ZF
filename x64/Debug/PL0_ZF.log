@@ -1,4 +1,10 @@
 ﻿  pl0.c
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(943): warning C4101: “mk”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(751): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(802): warning C4047: “函数”:“int”与“int *”的间接级别不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(802): warning C4024: “condition_or”: 形参和实参 3 的类型不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(823): warning C4047: “函数”:“int”与“int *”的间接级别不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(823): warning C4024: “condition_or”: 形参和实参 3 的类型不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(831): warning C4028: 形参 3 与声明不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1040): warning C4101: “mk”: 未引用的局部变量
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.exe
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.pdb (Partial PDB)

@@ -665,67 +665,63 @@ void expression(symset fsys)
 } // expression
 
 //////////////////////////////////////////////////////////////////////
-void condition(symset fsys)
+void comparation(symset fsys)
 {
 	int relop;
 	symset set;
 
-	if (sym == SYM_ODD)
+	/*if (sym == SYM_ODD)
 	{
 		getsym();
 		expression(fsys);
 		gen(OPR, 0, 6);
-	}
-	else
-	{
-		set = uniteset(relset, fsys);
-		expression(set);
+	}*/
+	set = uniteset(relset, fsys);
+	expression(set);
 //		destroyset(set);
 /*		if (! inset(sym, relset))
+	{
+		error(20);
+	}*/
+	while (inset(sym, relset) && sym != SYM_NULL)
+	{
+		relop = sym;
+		getsym();
+		expression(set);
+		switch (relop)
 		{
-			error(20);
-		}*/
-		while (inset(sym, relset) && sym != SYM_NULL)
-		{
-			relop = sym;
-			getsym();
-			expression(set);
-			switch (relop)
-			{
-			//Equal
-			case SYM_EQU:
-				gen(OPR, 0, OPR_EQU);
-				break;
-			//Not Equal
-			case SYM_NEQ:
-				gen(OPR, 0, OPR_NEQ);
-				break;
-			case SYM_LES:
-				gen(OPR, 0, OPR_LES);
-				break;
-			case SYM_GEQ:
-				gen(OPR, 0, OPR_GEQ);
-				break;
-			case SYM_GTR:
-				gen(OPR, 0, OPR_GTR);
-				break;
-			case SYM_LEQ:
-				gen(OPR, 0, OPR_LEQ);
-				break;
-			} // switch
-		} // else
+		//Equal
+		case SYM_EQU:
+			gen(OPR, 0, OPR_EQU);
+			break;
+		//Not Equal
+		case SYM_NEQ:
+			gen(OPR, 0, OPR_NEQ);
+			break;
+		case SYM_LES:
+			gen(OPR, 0, OPR_LES);
+			break;
+		case SYM_GEQ:
+			gen(OPR, 0, OPR_GEQ);
+			break;
+		case SYM_GTR:
+			gen(OPR, 0, OPR_GTR);
+			break;
+		case SYM_LEQ:
+			gen(OPR, 0, OPR_LEQ);
+			break;
+		} // switch
 	} // else
-} // condition
-
+} // comparation
 
 //ZF add:
 void bit_and(symset fsys)
 {
-	condition(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
+	comparation(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
 	while (sym == SYM_BITAND)
 	{
 		getsym();
-		condition(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
+		comparation(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
 		gen(OPR, 0, OPR_BITAND);
 	}
 }
@@ -749,9 +745,110 @@ void bit_or(symset fsys)
 		gen(OPR, 0, OPR_BITOR);
 	}
 }
+
+void checkbranch()
+{
+	int i;
+	if (code[cx - 1].f == JPC)
+	{
+		if (code[cx - 2].f == OPR)
+		{
+			switch (code[cx - 2].a)
+			{
+			case OPR_EQU:
+				cx -= 2;
+				gen(JPC, 14, code[cx + 1].a);
+				break;
+			case OPR_NEQ:
+				cx -= 2;
+				gen(JPC, 15, code[cx + 1].a);
+				break;
+			case OPR_GTR:
+				cx -= 2;
+				gen(JPC, 10, code[cx + 1].a);
+				break;
+			case OPR_GEQ:
+				cx -= 2;
+				gen(JPC, 11, code[cx + 1].a);
+				break;
+			case OPR_LES:
+				cx -= 2;
+				gen(JPC, 11, code[cx + 1].a);
+				break;
+			case OPR_LEQ:
+				cx -= 2;
+				gen(JPC, 13, code[cx + 1].a);
+				break;
+			}
+		}
+	}
+}
 //ZF add:
 //Store the JPC codes
 //And expression
+void condition_and(symset fsys,int *flist,int *flistsize)
+{
+	void condition_or(symset,int*,int);
+	int tlist[30];
+	int tlistsize;
+	int i;
+	if (sym != SYM_LPAREN)
+	{
+		bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+	}
+	else
+	{
+		getsym();
+		condition_or(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)), tlist, &tlistsize);
+		getsym();
+	}
+	flist[(*flistsize)++] = cx - 1;
+	while (sym = SYM_OR)
+	{
+		for (i = 0; i < tlistsize; i++)
+		{
+			code[tlist[i]].a = cx + 1;
+		}
+		tlistsize = 0;
+		gen(JPC, 0, 0);
+		checkbranch();
+		flist[(*flistsize)++] = cx - 1;
+		if (sym != SYM_LPAREN)
+		{
+			bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+		}
+		else
+		{
+			getsym();
+			condition_or(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)), tlist, &tlistsize);
+			getsym();
+		}
+	}
+	gen(JPC, 1, 0);
+
+}
+void condition_or(symset fsys,int *tlist,int *tlistsize)
+{
+	int flist[30];
+	int flistsize = 0;
+	int i;
+	condition_and(uniteset(fsys, createset(SYM_AND, SYM_NULL)),flist,&flistsize);
+	tlist[(*tlistsize)++] = cx - 1;
+	while (sym == SYM_AND)
+	{
+		for (i = 0; i < flistsize; i++)
+		{
+			code[flist[i]].a = cx + 1;
+		}
+		flistsize = 0;
+		gen(JPC, 1, 0);
+		checkbranch();
+		tlist[(*tlistsize)++] = cx - 1;
+		condition_and(fsys, flist, &flistsize);
+	}
+	//Attention! The last one is opposite£¡
+	gen(JPC, 0, 0);
+}
 void logic_and(symset fsys)
 {
 	int JPCs[30];
@@ -760,18 +857,16 @@ void logic_and(symset fsys)
 	bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
 	JPCs[i++] = cx;
 	gen(JPC, 0, 0);
-	gen(POP, 0, -1);
 	while(sym == SYM_AND)
 	{
 		getsym();
 		bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
-		gen(OPR, 0, OPR_AND);
-		JPCs[i++] = cx;
 		gen(JPC, 0, 0);
-		gen(POP, 0, -1);
+		JPCs[i++] = cx - 1;
 	}
 	if (i != 1)
 	{
+		gen(LIT, 0, 1);
 		gen(JMP, 0, cx + 2);
 		for (j = 0; j < i; j++)
 		{
@@ -781,7 +876,7 @@ void logic_and(symset fsys)
 	}
 	else
 	{
-		cx -= 2;
+		cx -= 1;
 	}
 }
 //ZF add:
@@ -805,6 +900,7 @@ void logic_and(symset fsys)
 	lit 0,1       <---end
 
 */
+
 void logic_or(symset fsys)
 {
 	int JPCs[30];
@@ -813,18 +909,16 @@ void logic_or(symset fsys)
 	logic_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)));
 	JPCs[i++] = cx;
 	gen(JPC, 1, 0);
-	gen(POP, 0, -1);
 	while (sym == SYM_OR)
 	{
 		getsym();
 		logic_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)));
-		gen(OPR, 0, OPR_OR);
-		JPCs[i++] = cx;
 		gen(JPC, 1, 0);
-		gen(POP, 0, -1);
+		JPCs[i++] = cx - 1;
 	}
 	if (i != 1)
 	{
+		gen(LIT, 0, 0);
 		gen(JMP, 0, cx + 2);
 		for (j = 0; j < i; j++)
 		{
@@ -834,9 +928,12 @@ void logic_or(symset fsys)
 	}
 	else
 	{
-		cx -= 2;
+		cx -= 1;
 	}
 }
+
+
+
 
 void para_list(symset fsys)
 {
@@ -1083,7 +1180,7 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_DO, SYM_NULL);
 		set = uniteset(set1, fsys);
-		condition(set);
+		comparation(set);
 		destroyset(set1);
 		destroyset(set);
 		cx2 = cx;
@@ -1524,6 +1621,36 @@ void interpret()
 				if (stack[top] > 0)
 					pc = i.a;
 				top--;
+				break;
+			case 10:
+				if (stack[top] > stack[top - 1])
+					pc = i.a;
+				top -= 2;
+				break;
+			case 11:
+				if (stack[top] >= stack[top - 1])
+					pc = i.a;
+				top -= 2;
+				break;
+			case 12:
+				if (stack[top] < stack[top - 1])
+					pc = i.a;
+				top -= 2;
+				break;
+			case 13:
+				if (stack[top] <= stack[top - 1])
+					pc = i.a;
+				top -= 2;
+				break;
+			case 14:
+				if (stack[top] == stack[top - 1])
+					pc = i.a;
+				top -= 2;
+				break;
+			case 15:
+				if (stack[top] != stack[top - 1])
+					pc = i.a;
+				top -= 2;
 				break;
 			}
 			break;
