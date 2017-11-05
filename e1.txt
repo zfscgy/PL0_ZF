@@ -5,7 +5,7 @@ procedure fact(n) // no semicolon here!
 		return 1;
 	else 
 		return n * fact(n-1);
-	end; // no semicolon here!
+	end // no semicolon here!
 begin
 	result := fact(5); 
 end.

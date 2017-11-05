@@ -514,10 +514,12 @@ void factor(symset fsys)
 					mask* mk;
 				case ID_CONSTANT:
 					gen(LIT, 0, table[i].value);
+					getsym();
 					break;
 				case ID_VARIABLE:
 					mk = (mask*)&table[i];
 					gen(LOD, level - mk->level, mk->address);
+					getsym();
 					break;
 					//ZF modified: Procedure can be a factor
 				case ID_PROCEDURE:
@@ -558,11 +560,10 @@ void factor(symset fsys)
 					getsym();
 					arrayposition(i);
 					gen(LODS, level - mk->level, mk->address);
-					getsym();
 					break;
 				} // switch
 			}
-			getsym();
+			//getsym();
 		}
 		else if (sym == SYM_NUMBER)
 		{
@@ -749,35 +750,37 @@ void bit_or(symset fsys)
 void checkbranch()
 {
 	int i;
-	if (code[cx - 1].f == JPC)
+	int d;
+	if (code[cx - 1].f == JPC&&(code[cx - 1].l == 0 ||code[cx - 1].l == 1))
 	{
+		d = (code[cx - 1].l == 1) ? 1:-1;
 		if (code[cx - 2].f == OPR)
 		{
 			switch (code[cx - 2].a)
 			{
 			case OPR_EQU:
 				cx -= 2;
-				gen(JPC, 14, code[cx + 1].a);
+				gen(JPC, 12 * d, code[cx + 1].a);
 				break;
 			case OPR_NEQ:
 				cx -= 2;
-				gen(JPC, 15, code[cx + 1].a);
+				gen(JPC, -12 * d, code[cx + 1].a);
 				break;
 			case OPR_GTR:
 				cx -= 2;
-				gen(JPC, 10, code[cx + 1].a);
+				gen(JPC, 10 * d, code[cx + 1].a);
 				break;
 			case OPR_GEQ:
 				cx -= 2;
-				gen(JPC, 11, code[cx + 1].a);
+				gen(JPC, 11 * d, code[cx + 1].a);
 				break;
 			case OPR_LES:
 				cx -= 2;
-				gen(JPC, 11, code[cx + 1].a);
+				gen(JPC, -11 * d, code[cx + 1].a);
 				break;
 			case OPR_LEQ:
 				cx -= 2;
-				gen(JPC, 13, code[cx + 1].a);
+				gen(JPC, -10 * d, code[cx + 1].a);
 				break;
 			}
 		}
@@ -788,13 +791,14 @@ void checkbranch()
 //And expression
 void condition_and(symset fsys,int *flist,int *flistsize)
 {
-	void condition_or(symset,int*,int);
+	void condition_or(symset,int*,int*);
 	int tlist[30];
-	int tlistsize;
+	int tlistsize = 0;
 	int i;
 	if (sym != SYM_LPAREN)
 	{
 		bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+		gen(JPC, -1, 0);
 	}
 	else
 	{
@@ -803,19 +807,21 @@ void condition_and(symset fsys,int *flist,int *flistsize)
 		getsym();
 	}
 	flist[(*flistsize)++] = cx - 1;
-	while (sym = SYM_OR)
+	while (sym == SYM_AND)
 	{
 		for (i = 0; i < tlistsize; i++)
 		{
-			code[tlist[i]].a = cx + 1;
+			code[tlist[i]].a = cx;
 		}
 		tlistsize = 0;
-		gen(JPC, 0, 0);
+		//gen(JPC, 0, 0);
 		checkbranch();
 		flist[(*flistsize)++] = cx - 1;
+		getsym();
 		if (sym != SYM_LPAREN)
 		{
 			bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+			gen(JPC, -1, 0);
 		}
 		else
 		{
@@ -824,7 +830,15 @@ void condition_and(symset fsys,int *flist,int *flistsize)
 			getsym();
 		}
 	}
-	gen(JPC, 1, 0);
+	code[cx - 1].l = -code[cx - 1].l;
+	checkbranch();
+	for (i = 0; i < tlistsize; i++)
+	{
+		code[tlist[i]].a = cx;
+	}
+	tlistsize = 0;
+	//gen(JPC, 0, 0);
+
 
 }
 void condition_or(symset fsys,int *tlist,int *tlistsize)
@@ -832,22 +846,29 @@ void condition_or(symset fsys,int *tlist,int *tlistsize)
 	int flist[30];
 	int flistsize = 0;
 	int i;
-	condition_and(uniteset(fsys, createset(SYM_AND, SYM_NULL)),flist,&flistsize);
+	condition_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)),flist,&flistsize);
 	tlist[(*tlistsize)++] = cx - 1;
-	while (sym == SYM_AND)
+	while (sym == SYM_OR)
 	{
 		for (i = 0; i < flistsize; i++)
 		{
-			code[flist[i]].a = cx + 1;
+			code[flist[i]].a = cx;
 		}
 		flistsize = 0;
-		gen(JPC, 1, 0);
+		//gen(JPC, 1, 0);
 		checkbranch();
 		tlist[(*tlistsize)++] = cx - 1;
-		condition_and(fsys, flist, &flistsize);
+		getsym();
+		condition_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)), flist, &flistsize);
+	}
+	code[cx - 1].l = -code[cx - 1].l;
+	checkbranch();
+	for (i = 0; i < flistsize; i++)
+	{
+		code[flist[i]].a = cx;
 	}
 	//Attention! The last one is opposite£¡
-	gen(JPC, 0, 0);
+	//gen(JPC, 0, 0);
 }
 void logic_and(symset fsys)
 {
@@ -1095,6 +1116,9 @@ void statement(symset fsys)
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
+		int tlist[30];
+		int tlistsize = 0;
+		int flist;
 		getsym();
 		if (sym == SYM_LPAREN)
 		{
@@ -1106,11 +1130,17 @@ void statement(symset fsys)
 		}
 		set1 = createset(SYM_BEGIN,SYM_RPAREN ,SYM_NULL);
 		set = uniteset(set1, fsys);
-		logic_or(set);
+		//logic_or(set);
+		condition_or(set, tlist, &tlistsize);
+		flist = cx - 1;
 		destroyset(set1);
 		destroyset(set);
-		cx1 = cx;
-		gen(JPC, 0, 0);
+		//cx1 = cx;
+		//gen(JPC, 0, 0);
+		for (i = 0; i < tlistsize; i++)
+		{
+			code[tlist[i]].a = cx;
+		}
 		if (sym == SYM_RPAREN)
 		{
 			getsym();
@@ -1120,7 +1150,8 @@ void statement(symset fsys)
 			error(28);
 		}
 		statement(uniteset(fsys,createset(SYM_ELSE,SYM_NULL)));
-		code[cx1].a = cx;//cx1 is the index of JPC instruction
+		code[flist].a = cx;
+		//code[cx1].a = cx;//cx1 is the index of JPC instruction
 
 		//ZF add 
 		//ZF add:
@@ -1135,7 +1166,8 @@ void statement(symset fsys)
 		}
 		if (sym == SYM_ELSE)
 		{
-			code[cx1].a += 1;
+			//code[cx1].a += 1;
+			code[flist].a += 1;
 			cx1 = cx;
 			gen(JMP, 0, 0);
 			getsym();
@@ -1167,7 +1199,7 @@ void statement(symset fsys)
 		destroyset(set);
 		if (sym == SYM_END)
 		{
-			getsym();
+			//getsym();
 		}
 		else
 		{
@@ -1363,7 +1395,7 @@ void block(symset fsys)
 		level--;
 		//ZF note:
 		//If syms is ";"
-		if (sym == SYM_SEMICOLON)
+		if (sym == SYM_END)
 		{
 			getsym();
 			set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
@@ -1607,7 +1639,7 @@ void interpret()
 		case JPC:
 			switch (i.l)
 			{
-			case 0:
+			case -1:
 				if (stack[top] == 0)
 					pc = i.a;
 				top--;
@@ -1632,22 +1664,22 @@ void interpret()
 					pc = i.a;
 				top -= 2;
 				break;
-			case 12:
+			case -11:
 				if (stack[top] < stack[top - 1])
 					pc = i.a;
 				top -= 2;
 				break;
-			case 13:
+			case -10:
 				if (stack[top] <= stack[top - 1])
 					pc = i.a;
 				top -= 2;
 				break;
-			case 14:
+			case 12:
 				if (stack[top] == stack[top - 1])
 					pc = i.a;
 				top -= 2;
 				break;
-			case 15:
+			case -12:
 				if (stack[top] != stack[top - 1])
 					pc = i.a;
 				top -= 2;
@@ -1709,11 +1741,12 @@ void main ()
 	getsym();
 	//ZFNote:
 	//set1 is the end symbols
-	set1 = createset(SYM_PERIOD, SYM_NULL);
+	set1 = createset(SYM_PERIOD,SYM_END, SYM_NULL);
 	//set2 is the start symbols
 	set2 = uniteset(declbegsys, statbegsys);
 	set = uniteset(set1, set2);
 	block(set);
+	getsym();
 	destroyset(set1);
 	destroyset(set2);
 	destroyset(set);
@@ -1722,7 +1755,7 @@ void main ()
 	destroyset(declbegsys);
 	destroyset(statbegsys);
 	destroyset(facbegsys);
-
+	
 	if (sym != SYM_PERIOD)
 		error(9); // '.' expected.
 	if (err == 0)
