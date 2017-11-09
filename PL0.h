@@ -16,76 +16,121 @@
 
 enum symtype
 {
-	SYM_NULL,       //0
-	SYM_IDENTIFIER, //Varibles
-	SYM_NUMBER,
-	SYM_PLUS,
-	SYM_MINUS,
-	SYM_TIMES,      //5
-	SYM_SLASH,
-	SYM_ODD,
-	SYM_EQU,
-	SYM_NEQ,
-	SYM_LES,        //10
-	SYM_LEQ,
-	SYM_GTR,
-	SYM_GEQ,
-	SYM_LPAREN,
-	SYM_RPAREN,     //15
-	SYM_COMMA,
-	SYM_SEMICOLON,
-	SYM_PERIOD, //symbol "."
-	SYM_BECOMES,
-    SYM_BEGIN,      //20
-	SYM_END,
-	SYM_IF,
-	SYM_THEN,
-	SYM_WHILE,
-	SYM_DO,         //25
-	SYM_CALL,
-	SYM_CONST,
-	SYM_VAR, //reserved word "var"
-	SYM_PROCEDURE,
+	SYM_NULL,
+	SYM_IDENTIFIER,
+	SYM_CONST,		// const
+	SYM_VAR,		// var
+	SYM_PROCEDURE,	// procedure
+	SYM_NUMBER,		// 0123456789
+	SYM_PLUS,		// +
+	SYM_MINUS,		// -
+	SYM_TIMES,		// * 
+	SYM_SLASH,		// /
+	SYM_SHR,		// >>
+	SYM_SHL,		// <<
+	SYM_ODD,		// odd
+	SYM_INC,		// ++
+	SYM_DEC,		// --
+	SYM_ADDTO,		// +=
+	SYM_SUBTO,		// -=
+	SYM_MULTO,		// *=
+	SYM_DIVTO,		// /=
+	SYM_EQU,		// ==
+	SYM_NEQ,		// !=
+	SYM_LES,		// <
+	SYM_LEQ,		// <=
+	SYM_GTR,		// >
+	SYM_GEQ,		// >=
+	SYM_LBRACKET,	// [
+	SYM_RBRACKET,	// ]
+	SYM_NOT,		// !
+	SYM_AND,		// &&
+	SYM_OR,			// ||
+	SYM_BITAND,		// &
+	SYM_BITOR,		// |
+	SYM_XOR,		// ^
+	SYM_BITNOT,		// ~
+	SYM_MOD,		// %
+	SYM_LPAREN,		// (
+	SYM_RPAREN,		// )         
+	SYM_COMMA,		// ,
+	SYM_SEMICOLON,	// ;
+	SYM_PERIOD,		// .
+	SYM_BECOMES,	// :=
+    SYM_BEGIN,		// begin     
+	SYM_END,		// end
+	SYM_IF,			// if
+	SYM_THEN,		// then
+	SYM_WHILE,		// while
+	SYM_DO,			// do
+	SYM_CALL,		// call
 
-	//ZF add
-	SYM_ELSE,       //30
-	SYM_ELIF,
-	SYM_RETURN,
-	SYM_FOR,
-	SYM_LBRACKET,
-	SYM_RBRACKET,
+	SYM_ELSE,		// else
+	SYM_ELIF,		// elif
+	SYM_RETURN,		// return
+	SYM_FOR,		// for
 
-	//ZF add:
-	SYM_NOT,	
-	SYM_AND,
-	SYM_OR,
-	SYM_BITAND,
-	SYM_BITOR,
-	SYM_XOR,
-	SYM_MOD
 };
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE, ID_ARRAY, 
+	ID_CONSTANT,
+	ID_VARIABLE,
+	ID_PROCEDURE,
+	ID_ARRAY, 
 };
 
 enum opcode
 {
-	LIT, OPR, LOD,LODS, STO,STOS, CAL, INT, JMP, JPC, MOV,POP
+	LIT,
+	OPR,
+	LOD,
+	LODS,
+	STO,
+	STOS,
+	CAL,
+	INT,
+	JMP,
+	JPC,
+	MOV,
+	POP
 };
 
 enum oprcode
 {
-	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
-	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
-	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
+	OPR_RET,
+	OPR_NEG,
+	OPR_ADD,
+	OPR_MIN,
+	OPR_MUL,
+	OPR_DIV,
+	OPR_ODD,
+	OPR_EQU,
+	OPR_NEQ,
+	OPR_LES,
+	OPR_LEQ,
+	OPR_GTR,
 	OPR_GEQ,
-	//ZF add
-	OPR_AND, OPR_OR, OPR_NOT,
-	OPR_BITAND,OPR_BITOR,OPR_XOR,OPR_MOD,
+	OPR_AND,
+	OPR_OR,
+	OPR_NOT,
+	OPR_BITAND,
+	OPR_BITOR,
+	OPR_XOR,
+	OPR_MOD,
 };
-
+enum jmpcode
+{
+	J_Z = 1,
+	J_NZ = -1,
+	J_POS = 2,
+	J_GRT = 10,
+	J_GRE = 11,
+	J_EQU = 12,
+	J_LEQ = -10,
+	J_LES = -11,
+	J_NEQ  = -12,
+};
 
 typedef struct
 {
@@ -167,6 +212,12 @@ int wsym[NRW + 1] =
 	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,
 };
 
+char csym[NSYM + 1] =
+{
+	' ', '+', '-', '*', '/', '(', ')', ',', '.', ';',
+	'[',']','!','&','|','^','%'
+};
+
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
@@ -175,19 +226,24 @@ int ssym[NSYM + 1] =
 	SYM_BITAND,SYM_BITOR,SYM_XOR,SYM_MOD,
 };
 
-char csym[NSYM + 1] =
-{
-	' ', '+', '-', '*', '/', '(', ')', ',', '.', ';',
-	'[',']','!',
-	//ZF add:
-	'&','|','^','%'
-};
+
 
 #define MAXINS   12
 #define MAXD	 4
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD","LODS", "STO", "STOS", "CAL", "INT", "JMP", "JPC", "MOV", "POP",
+	"LIT",
+	"OPR",
+	"LOD",
+	"LODS", 
+	"STO",
+	"STOS",
+	"CAL",
+	"INT",
+	"JMP",
+	"JPC",
+	"MOV",
+	"POP",
 };
 
 typedef struct
@@ -199,7 +255,7 @@ typedef struct
 	unsigned char indices[MAXD];
 } comtab;
 
-comtab table[TXMAX];
+comtab identifier_table[TXMAX];
 
 typedef struct
 {

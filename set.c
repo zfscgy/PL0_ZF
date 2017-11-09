@@ -108,7 +108,7 @@ void destroyset(symset s)
 	}
 } // destroyset
 
-int inset(int elem, symset s)
+int in_symbol_set(int elem, symset s)
 {
 	s = s->next;
 	while (s && s->elem < elem)
