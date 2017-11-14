@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include "set.h"
 
-symset uniteset(symset s1, symset s2)
+symset symset_unite(symset s1, symset s2)
 {
 	symset s;
 	snode* p;
@@ -95,7 +95,7 @@ symset createset(int elem, .../* SYM_NULL */)
 	return s;
 } // createset
 
-void destroyset(symset s)
+void symset_destroy(symset s)
 {
 	snode* p;
 

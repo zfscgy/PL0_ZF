@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define NRW        15     // number of reserved words
+#define NRW        16     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       17     // maximum number of symbols in array ssym and csym
@@ -69,6 +69,7 @@ enum symtype
 	SYM_ELIF,		// elif
 	SYM_RETURN,		// return
 	SYM_FOR,		// for
+	SYM_BREAK,
 
 };
 
@@ -190,7 +191,8 @@ int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
 unsigned char arrayInfo[5]; //current array
-char line[80];
+char line[300];
+int para_num;
 
 instruction code[CXMAX];
 //ZF note
@@ -200,7 +202,7 @@ char* word[NRW + 1] =
 	"", /* place holder */
 	"begin", "call", "const", "do", "end","if",
 	"odd", "procedure", "then", "var", "while",
-	"else", "elif", "return", "for"
+	"else", "elif", "return", "for","break",
 };
 //ZF note
 //This array contains all Symbols corresponding to the reserved word
@@ -209,7 +211,7 @@ int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,
-	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,
+	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,SYM_BREAK,
 };
 
 char csym[NSYM + 1] =

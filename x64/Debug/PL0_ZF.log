@@ -1,6 +1,8 @@
 ﻿  pl0.c
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(15): warning C4101: “c”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(621): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(838): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(628): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(773): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(827): warning C4047: “<”:“int”与“int *”的间接级别不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(853): warning C4047: “<”:“int”与“int *”的间接级别不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1056): warning C4101: “current_break_list”: 未引用的局部变量
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.exe
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.pdb (Partial PDB)

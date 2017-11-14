@@ -12,9 +12,6 @@
 #include "set.h"
 void mytest()
 {
-	int c;
-	int i = 1;
-	//printf("%d\n", c);
 }
 
 void error(int n)
@@ -38,7 +35,6 @@ void error_s(char *msg)
 	printf("Error Message: %s\n", msg);
 	err++;
 }
-
 int inBlockComment = 0;
 void getch(void)
 {
@@ -100,7 +96,6 @@ void getch(void)
 	//
 	ch = line[++cc];
 } // getch
-
 void getsym(void)
 {
 	int i, k;
@@ -320,16 +315,28 @@ void listcode(int from, int to)
 void test(symset s1, symset s2, int n)
 {
 	symset s;
-
 	if (! in_symbol_set(sym, s1))
 	{
 		error(n);
-		s = uniteset(s1, s2);
+		s = symset_unite(s1, s2);
 		while(! in_symbol_set(sym, s))
 			getsym();
-		destroyset(s);
+		symset_destroy(s);
 	}
-} // test
+}
+void test_s(symset symset_leagal, symset symset_next, char *msg)
+{
+	symset s;
+	if (!in_symbol_set(sym, symset_leagal))
+	{
+		error_s(msg);
+		s = symset_unite(symset_leagal, symset_next);
+		while (!in_symbol_set(sym, s))
+			getsym();
+		symset_destroy(s);
+	}
+}
+
 
 int dx;  // data allocation index
 // enter object(constant, variable or procedre) into table.
@@ -555,7 +562,7 @@ void expr_prime(symset fsys)
 void expr_self(symset fsys)
 {
 	int selfsym;
-	symset expr_prime_follow = uniteset(fsys, end_symbols_self);
+	symset expr_prime_follow = symset_unite(fsys, end_symbols_self);
 	if (in_symbol_set(sym, begin_symbols_self))
 	{
 		selfsym = sym;
@@ -626,9 +633,9 @@ void expr_factor(symset fsys)
 	if (sym == SYM_LPAREN)
 	{
 		getsym();
-		set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
+		set = symset_unite(createset(SYM_RPAREN, SYM_NULL), fsys);
 		expr_logic_or(set);
-		destroyset(set);
+		symset_destroy(set);
 		if (sym == SYM_RPAREN)
 		{
 			getsym();
@@ -642,85 +649,13 @@ void expr_factor(symset fsys)
 	{
 		expr_self(fsys);
 	}
-	/*		if (sym == SYM_IDENTIFIER)
-			{
-	//			mask* mk;//Stores the JMP code
-				if ((i = identifier_position(id)) == 0)
-				{
-					error(11); // Undeclared identifier.
-				}
-				else
-				{
-					switch (identifier_table[i].kind)
-					{
-						mask* mk;
-					case ID_CONSTANT:
-						gen(LIT, 0, identifier_table[i].value);
-						getsym();
-						break;
-					case ID_VARIABLE:
-						mk = (mask*)&identifier_table[i];
-						gen(LOD, level - mk->level, mk->address);
-						getsym();
-						break;
-					case ID_PROCEDURE:
-						getsym();
-						expr_function(i);
-						break;
-					case ID_ARRAY:
-						mk = (mask*)&identifier_table[i];
-						getsym();
-						position_array(i);
-						gen(LODS, level - mk->level, mk->address);
-						break;
-					} // switch
-				}
-			}
-			else if (sym == SYM_NUMBER)
-			{
-				if (num > MAXADDRESS)
-				{
-					error(25); // The number is too great.
-					num = 0;
-				}
-				gen(LIT, 0, num);
-				getsym();
-			}
-			else if (sym == SYM_LPAREN)
-			{
-				getsym();
-				set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
-				expr_logic_or(set);
-				destroyset(set);
-				if (sym == SYM_RPAREN)
-				{
-					getsym();
-				}
-				else
-				{
-					error(22); // Missing ')'.
-				}
-			}
-			else if(sym == SYM_MINUS) // UMINUS,  Expr -> '-' Expr
-			{
-				 getsym();
-				 expr_factor(fsys);
-				 gen(OPR, 0, OPR_NEG);
-			}
-			else if (sym == SYM_NOT)
-			{
-				getsym();
-				expr_factor(fsys);
-				gen(OPR, 0, OPR_NOT);
-			}
-			test(fsys, createset(SYM_RPAREN, SYM_COMMA, SYM_NULL), 23);*/
 }
 // a*b,a/b
 void expr_term(symset fsys)
 {
 	int mulop;
 	symset set;	
-	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_MOD, SYM_NULL));
+	set = symset_unite(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_MOD, SYM_NULL));
 	expr_factor(set);
 	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD)
 	{
@@ -740,7 +675,7 @@ void expr_term(symset fsys)
 			gen(OPR, 0, OPR_MOD);
 		}
 	} // while
-	destroyset(set);
+	symset_destroy(set);
 } // term
 // a+b,a-b
 void expr_arithmatic(symset fsys)
@@ -748,7 +683,7 @@ void expr_arithmatic(symset fsys)
 	int addop;
 	symset set;
 
-	set = uniteset(fsys, createset(SYM_PLUS, SYM_MINUS, SYM_NULL));
+	set = symset_unite(fsys, createset(SYM_PLUS, SYM_MINUS, SYM_NULL));
 	
 	expr_term(set);
 	while (sym == SYM_PLUS || sym == SYM_MINUS)
@@ -766,14 +701,14 @@ void expr_arithmatic(symset fsys)
 		}
 	}
 
-	destroyset(set);
+	symset_destroy(set);
 }
 // a>b,a==b
 void expr_comparation(symset fsys)
 {
 	int relop;
 	symset set;
-	set = uniteset(symbols_relation, fsys);
+	set = symset_unite(symbols_relation, fsys);
 	expr_arithmatic(set);
 	while (in_symbol_set(sym, symbols_relation) && sym != SYM_NULL)
 	{
@@ -805,35 +740,35 @@ void expr_comparation(symset fsys)
 }
 void expr_bit_and(symset fsys)
 {
-	expr_comparation(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
+	expr_comparation(symset_unite(fsys, createset(SYM_BITAND, SYM_NULL)));
 	while (sym == SYM_BITAND)
 	{
 		getsym();
-		expr_comparation(uniteset(fsys, createset(SYM_BITAND, SYM_NULL)));
+		expr_comparation(symset_unite(fsys, createset(SYM_BITAND, SYM_NULL)));
 		gen(OPR, 0, OPR_BITAND);
 	}
 }
-void bit_xor(symset fsys)
+void expr_bit_xor(symset fsys)
 {
-	expr_bit_and(uniteset(fsys, createset(SYM_XOR, SYM_NULL)));
+	expr_bit_and(symset_unite(fsys, createset(SYM_XOR, SYM_NULL)));
 	while (sym == SYM_XOR)
 	{
 		getsym();
-		expr_bit_and(uniteset(fsys, createset(SYM_XOR, SYM_NULL)));
+		expr_bit_and(symset_unite(fsys, createset(SYM_XOR, SYM_NULL)));
 		gen(OPR, 0, OPR_XOR);
 	}
 }
 void expr_bit_or(symset fsys)
 {
-	bit_xor(uniteset(fsys, createset(SYM_BITOR, SYM_NULL)));
+	expr_bit_xor(symset_unite(fsys, createset(SYM_BITOR, SYM_NULL)));
 	while (sym == SYM_BITOR)
 	{
 		getsym();
-		bit_xor(uniteset(fsys, createset(SYM_BITOR, SYM_NULL)));
+		expr_bit_xor(symset_unite(fsys, createset(SYM_BITOR, SYM_NULL)));
 		gen(OPR, 0, OPR_BITOR);
 	}
 }
-void checkbranch()
+void check_branch()
 {
 	int i;
 	int d;
@@ -874,97 +809,87 @@ void checkbranch()
 		}
 	}
 }
-void expr_condition_and(symset fsys,int *false_list,int *false_list_size)
+void expr_condition_and(symset fsys,int *false_list,int *false_list_size,int *true_list, int *true_list_size)
 {
-	void expr_condition_or(symset,int*,int*);
-	int true_list[30];
-	int true_list_size = 0;
+	void expr_condition_or(symset,int*,int*,int*,int*);
 	int i;
 	if (sym != SYM_LPAREN)
 	{
-		expr_bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+		expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 		gen(JPC, -1, 0);
-		checkbranch();
+		check_branch();
+		false_list[(*false_list_size)++] = cx - 1;
 	}
 	else
 	{
 		getsym();
-		expr_condition_or(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, &true_list_size);
-		getsym();
-	}
-	false_list[(*false_list_size)++] = cx - 1;
-	while (sym == SYM_AND)
-	{
+		expr_condition_or(symset_unite(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, true_list_size, false_list, false_list_size);
 		for (i = 0; i < true_list_size; i++)
 		{
 			code[true_list[i]].a = cx;
 		}
-		true_list_size = 0;
-		//gen(JPC, 0, 0);
-		false_list[(*false_list_size)++] = cx - 1;
+		getsym();
+	}
+	while (sym == SYM_AND)
+	{
+		if (*true_list_size > 1)
+		{
+			code[cx - 1].l = -code[cx - 1].l;
+			false_list[(*false_list_size)++] = cx - 1;
+		}
+		*true_list_size = 0;
 		getsym();
 		if (sym != SYM_LPAREN)
 		{
-			expr_bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+			expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 			gen(JPC, -1, 0);
-			checkbranch();
+			check_branch();
+			false_list[(*false_list_size)++] = cx - 1;
 		}
 		else
 		{
 			getsym();
-			expr_condition_or(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, &true_list_size);
+			expr_condition_or(symset_unite(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, true_list_size, false_list, false_list_size);
+			for (i = 0; i < true_list_size; i++)
+			{
+				code[true_list[i]].a = cx;
+			}
 			getsym();
-		}
-	}
-	code[cx - 1].l = -code[cx - 1].l;
-	checkbranch();
-	for (i = 0; i < true_list_size; i++)
-	{
-		code[true_list[i]].a = cx;
-	}
-	true_list_size = 0;
-
+		} 
+	};
 }
-void expr_condition_or(symset fsys,int *true_list,int *true_list_size)
+void expr_condition_or(symset fsys,int *true_list,int *true_list_size, int *false_list, int *false_list_size)
 {
-	int false_list[30];
-	int false_list_size = 0;
 	int i;
-	expr_condition_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)),false_list,&false_list_size);
-	true_list[(*true_list_size)++] = cx - 1;
+	expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)), false_list, false_list_size, 
+		true_list, true_list_size);
+	check_branch();
 	while (sym == SYM_OR)
 	{
-		for (i = 0; i < false_list_size; i++)
+		for (i = 0; i < *false_list_size; i++)
 		{
 			code[false_list[i]].a = cx;
 		}
-		false_list_size = 0;
-		checkbranch();
+		code[cx - 1].l = -code[cx - 1].l;
 		true_list[(*true_list_size)++] = cx - 1;
 		getsym();
-		expr_condition_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)), false_list, &false_list_size);
-	}
-	code[cx - 1].l = -code[cx - 1].l;
-	checkbranch();
-	for (i = 0; i < false_list_size; i++)
-	{
-		code[false_list[i]].a = cx;
-	}
-	//Attention! The last one is opposite£¡
-	//gen(JPC, 0, 0);
+		*false_list_size = 0;
+		expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)), false_list, false_list_size, true_list, true_list_size);
+		check_branch();
+	};
 }
 void expr_logic_and(symset fsys)
 {
 	int JPCs[30];
 	int i = 0;
 	int j;
-	expr_bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+	expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 	JPCs[i++] = cx;
 	gen(JPC, 0, 0);
 	while(sym == SYM_AND)
 	{
 		getsym();
-		expr_bit_or(uniteset(fsys, createset(SYM_AND, SYM_NULL)));
+		expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 		gen(JPC, 0, 0);
 		JPCs[i++] = cx - 1;
 	}
@@ -1008,13 +933,13 @@ void expr_logic_or(symset fsys)
 	int JPCs[30];
 	int i = 0;
 	int j;
-	expr_logic_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)));
+	expr_logic_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)));
 	JPCs[i++] = cx;
 	gen(JPC, 1, 0);
 	while (sym == SYM_OR)
 	{
 		getsym();
-		expr_logic_and(uniteset(fsys, createset(SYM_OR, SYM_NULL)));
+		expr_logic_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)));
 		gen(JPC, 1, 0);
 		JPCs[i++] = cx - 1;
 	}
@@ -1039,7 +964,7 @@ void expr_assignment(symset fsys)
 	int cx0,cx1;
 	instruction leftlod[10];
 	cx0 = cx;
-	expr_logic_or(uniteset(fsys,createset(SYM_BECOMES)));
+	expr_logic_or(symset_unite(fsys,createset(SYM_BECOMES)));
 	if (sym == SYM_BECOMES)
 	{
 		getsym();
@@ -1073,25 +998,31 @@ void expr_assignment(symset fsys)
 		}
 	}
 }
-
-
-void para_list(symset fsys)
+int function_paralist(symset fsys)
 {
+	int current_para_num = 0;
+	int i;
 	while (sym == SYM_IDENTIFIER)
 	{
 		identifier_enter(ID_VARIABLE);
+		current_para_num++;
 		getsym();
 		if (sym == SYM_RPAREN)
 		{
-			return;
+			break;
 		}
 		if (sym != SYM_COMMA)
 		{
-			error(26);
+			error_s("Paralist encountered unexpected symbol.\nExpected ')' or ','.");
 		}
 		getsym();
 	}
-	//getsym();
+	dx -= current_para_num;
+	for (i = 0; i < current_para_num; i++)
+	{
+		((mask*)&identifier_table[tx - i])->address = -i - 1;
+	}
+	return current_para_num;
 }
 
 void expr_function(int i) //i is the id of procedure identifier
@@ -1102,17 +1033,13 @@ void expr_function(int i) //i is the id of procedure identifier
 	}
 	//Following codes give the value to function arguments
 	//Treat arguments like local vars!
-	int j = 3;
 	do {
 		getsym();
 		if (sym == SYM_RPAREN)
 		{
 			break;
 		}
-		//mk = (mask*)&table[++j];
 		expr_logic_or(createset(SYM_COMMA, SYM_RPAREN, SYM_NULL));
-		gen(MOV, 0, j++);
-		//getsym();
 	} while (sym == SYM_COMMA);
 	if (sym != SYM_RPAREN)
 	{
@@ -1122,15 +1049,18 @@ void expr_function(int i) //i is the id of procedure identifier
 	gen(CAL, level - mk->level, mk->address);
 	getsym();
 }
-void statement(symset fsys)
+void statement(symset fsys,int *break_list,int *break_list_size)
 {
 	int i, cx1, cx2;
 	symset inner_follow_symbols, set;
+	int current_break_list[100];
+	int current_break_list_size = 0;
 	if (sym == SYM_IF)
 	{ // if statement
 		int true_list[30];
 		int true_list_size = 0;
-		int false_list;
+		int false_list[30];
+		int false_list_size = 0;
 		getsym();
 		if (sym == SYM_LPAREN)
 		{
@@ -1141,11 +1071,10 @@ void statement(symset fsys)
 			error_s("Expected '(' after 'if'");
 		}
 		set = createset(SYM_BEGIN,SYM_RPAREN ,SYM_NULL);
-		inner_follow_symbols = uniteset(set, fsys);
-		expr_condition_or(set, true_list, &true_list_size);
-		false_list = cx - 1;
-		destroyset(inner_follow_symbols);
-		destroyset(set);
+		inner_follow_symbols = symset_unite(set, fsys);
+		expr_condition_or(set, true_list, &true_list_size, false_list, &false_list_size);
+		symset_destroy(inner_follow_symbols);
+		symset_destroy(set);
 		for (i = 0; i < true_list_size; i++)
 		{
 			code[true_list[i]].a = cx;
@@ -1156,26 +1085,23 @@ void statement(symset fsys)
 		}
 		else
 		{
-			error(28);
+			error_s("Expected ')' after condition");
 		}
-		statement(uniteset(fsys,createset(SYM_ELSE,SYM_NULL)));
-		code[false_list].a = cx;
-		if (sym != SYM_SEMICOLON)
+		statement(symset_unite(fsys,createset(SYM_ELSE,SYM_NULL)),NULL,NULL);
+		for (i = 0; i < false_list_size; i++)
 		{
-			error_s("Expect ';' after statement");
-		}
-		else
-		{
-			getsym();
+			code[false_list[i]].a = cx;
 		}
 		if (sym == SYM_ELSE)
 		{
-			code[false_list].a += 1;
+			for (i = 0; i < false_list_size; i++)
+			{
+				code[false_list[i]].a +=1;
+			}
 			cx1 = cx;
 			gen(JMP, 0, 0);
 			getsym();
-			statement(fsys);
-			getsym();
+			statement(fsys,NULL,NULL);
 			code[cx1].a = cx;
 		}
 
@@ -1184,33 +1110,21 @@ void statement(symset fsys)
 	{ // block
 		getsym();
 		set = createset(SYM_SEMICOLON, SYM_END, SYM_NULL);
-		inner_follow_symbols = uniteset(set, fsys);
-		statement(set);
-		while (sym == SYM_SEMICOLON)
+		inner_follow_symbols = symset_unite(set, fsys);
+		statement(inner_follow_symbols,NULL,NULL);
+		while (in_symbol_set(sym,begin_symbols_statement))
 		{
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-				if (sym == SYM_END)
-				{
-					return;
-				}
-			}
-			else
-			{
-				getsym();
-				error(10);
-			}
-			statement(set);
-		} // while
-		destroyset(set);
-		destroyset(inner_follow_symbols);
+			statement(inner_follow_symbols,NULL,NULL);
+		}
+		symset_destroy(set);
+		symset_destroy(inner_follow_symbols);
 		if (sym == SYM_END)
 		{
+			getsym();
 		}
 		else
 		{
-			error_s("Did not find an 'end'.");
+			error_s("Did not find an 'end' at the end of statement.");
 		}
 	}
 	else if (sym == SYM_WHILE)
@@ -1218,13 +1132,13 @@ void statement(symset fsys)
 		cx1 = cx;
 		getsym();
 		set = createset(SYM_DO, SYM_NULL);
-		inner_follow_symbols = uniteset(set, fsys);
+		inner_follow_symbols = symset_unite(set, fsys);
 		expr_comparation(inner_follow_symbols);
-		destroyset(set);
-		destroyset(set);
+		symset_destroy(set);
+		symset_destroy(set);
 		cx2 = cx;
 		gen(JPC, 0, 0);
-		statement(fsys);
+		statement(fsys,break_list,break_list_size);
 		gen(JMP, 0, cx1);
 		code[cx2].a = cx;
 	}
@@ -1232,23 +1146,65 @@ void statement(symset fsys)
 	{
 		getsym();
 		expr_logic_or(fsys);
-		gen(OPR, 0, OPR_RET);
+		gen(STO, 0, -para_num);
+		gen(OPR,para_num, OPR_RET);
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Expect ';' after return.");
+		}
+		getsym();
+	}
+	else if (sym == SYM_FOR)
+	{
+		getsym();
+		if (sym != SYM_LPAREN)
+		{
+			error_s("Expect '(' after for");
+		}
+		getsym();
+		statement(fsys,break_list,break_list_size);
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Did not find ';'");
+		}
+
+	}
+	else if (sym == SYM_BREAK)
+	{
+		if (break_list == NULL)
+		{
+			error_s("Cannot add 'break' outside for loop or whileloop");
+		}
+		getsym();
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Expect ';' after 'break'.");
+		}
+	}
+	else if (sym == SYM_SEMICOLON)
+	{
+		getsym();
+		return;
 	}
 	else
 	{
 		expr_assignment(fsys);
+		gen(POP, 0, 1);
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Expect ';' in the end of statement.");
+		}
+		getsym();
 	}
-	gen(POP, 0, 1);
-	test(fsys, phi, 19);
-} // statement			
+}
 void block(symset fsys)
 {
 	int cx0; // initial code index
+	int block_para_num = 0;
 	mask* mk;
 	int block_dx;
 	int savedTx;
 	symset set1, set;
-
 	dx = 3;
 	block_dx = dx;
 	//ZF note:F
@@ -1262,28 +1218,21 @@ void block(symset fsys)
 	{
 		error(32); // There are too many levels.
 	}
-	//ZF add:
-	//If block is Procedure, then check the para_list....
 	if (sym == SYM_LPAREN)
 	{
 		getsym();
-		para_list(fsys);
+		block_para_num = function_paralist(fsys);
 		if (sym == SYM_RPAREN)
 		{
 			getsym();
 		}
 		else
 		{
-			error(22);// Missing ')'
+			error_s("Expect ')' at the end of para_list.");
 		}
 	}
-
-
-	//ZF note:
-	//This loop seems that we have to do all the declaration at the beginning of the program
 	do
 	{
-		//If first sym is "const", then we do a const declaration
 		if (sym == SYM_CONST)
 		{ // constant declarations
 			getsym();
@@ -1295,8 +1244,6 @@ void block(symset fsys)
 					getsym();
 					declaration_const();
 				}
-				//ZF note:
-				//";" means the end of a line
 				if (sym == SYM_SEMICOLON)
 				{
 					getsym();
@@ -1307,8 +1254,6 @@ void block(symset fsys)
 				}
 			} while (sym == SYM_IDENTIFIER);
 		} // if
-		//ZF note:
-		//If symbol is a variable
 		if (sym == SYM_VAR)
 		{ // variable declarations
 			getsym();
@@ -1374,41 +1319,30 @@ void block(symset fsys)
 		{
 			error(4); // There must be an identifier to follow 'const', 'var', or 'procedure'.
 		}
-
-
-		/*			if (sym == SYM_SEMICOLON)
-					{
-						getsym();
-					}
-					else
-					{
-						error(5); // Missing ',' or ';'.
-					}*/
-
 		level++;
 		savedTx = tx;
 		set1 = createset(SYM_SEMICOLON, SYM_NULL);
-		set = uniteset(set1, fsys);
+		set = symset_unite(set1, fsys);
 		block(set);
-		destroyset(set1);
-		destroyset(set);
+		symset_destroy(set1);
+		symset_destroy(set);
 		tx = savedTx;
 		level--;
 		//ZF note:
 		//If syms is ";"
-		if (sym == SYM_END)
+		/*if (sym == SYM_END)
 		{
 			getsym();
 			set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
-			set = uniteset(begin_symbols_statement, set1);
+			set = symset_unite(begin_symbols_statement, set1);
 			test(set, fsys, 6);
-			destroyset(set1);
-			destroyset(set);
+			symset_destroy(set1);
+			symset_destroy(set);
 		}
 		else
 		{
 			error(5); // Missing ',' or ';'.
-		}
+		}*/
 	} // while
 	dx = block_dx; //restore dx after handling procedure call!
 
@@ -1419,10 +1353,10 @@ void block(symset fsys)
 	If not, error
 	*/
 	set1 = createset(SYM_IDENTIFIER, SYM_NULL);
-	set = uniteset(begin_symbols_statement, set1);
+	set = symset_unite(begin_symbols_statement, set1);
 	test(set, begin_symbols_declaration, 7);
-	destroyset(set1);
-	destroyset(set);
+	symset_destroy(set1);
+	symset_destroy(set);
 
 	code[mk->address].a = cx;
 	mk->address = cx;
@@ -1431,12 +1365,13 @@ void block(symset fsys)
 	//After all the declaration, then begin statement!
 	//In this gen function, we see that i.a is set to block_dx, which is the end of local variable segment!!!
 	gen(INT, 0, block_dx);
-	set1 = createset(SYM_SEMICOLON, SYM_END, SYM_NULL);
-	set = uniteset(set1, fsys);
-	statement(set);
-	destroyset(set1);
-	destroyset(set);
-	gen(OPR, 0, OPR_RET); // return
+	set1 = createset(SYM_PERIOD,SYM_NULL);
+	set = symset_unite(set1, fsys);
+	para_num = block_para_num;
+	statement(set,NULL,NULL);
+	symset_destroy(set1);
+	symset_destroy(set);
+	gen(OPR,para_num ,OPR_RET); // return
 	test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
 	listcode(cx0, cx);
 } // block
@@ -1492,17 +1427,16 @@ void interpret()
 			case OPR_RET:
 				//stack[top] is the return value!
 				/*
-
-				static link(return value)(top-after)
-				dynamic link
+				static link
+				dynamic link       <-- b
 				return address
-				return value(top-before)
+				return value temp  <-- top
 				*/
-				stack[b] = stack[top];
-				top = b;
-				//top = b - 1;
-				pc = stack[top + 2];
-				b = stack[top + 1];
+				top = b + 2;
+				pc = stack[top];
+				top--;
+				b = stack[top];
+				top -= (i.l + 1);
 				break;
 			case OPR_NEG:
 				stack[top] = -stack[top];
@@ -1613,13 +1547,6 @@ void interpret()
 			b = top + 1;
 			pc = i.a;
 			break;
-		//ZF add:
-		//Use this to pass function arguments to the local_var segment 
-		//Before CAL 
-		case MOV:
-			stack[top + i.a] = stack[top];
-			top--;
-			break;
 		case INT:
 			top += i.a;
 			break;
@@ -1714,7 +1641,7 @@ void main ()
 	begin_symbols_self = createset(SYM_NOT, SYM_BITNOT, SYM_INC, SYM_DEC, SYM_NULL);
 	end_symbols_self = createset(SYM_INC, SYM_DEC, SYM_NULL);
 	begin_symbols_declaration = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
-	begin_symbols_statement = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_ELSE,SYM_WHILE, SYM_NULL);
+	begin_symbols_statement = createset(SYM_BEGIN, SYM_IDENTIFIER, SYM_IF, SYM_WHILE,SYM_SEMICOLON ,SYM_NULL);
 	begin_symbols_primeexpr = createset(SYM_NUMBER,SYM_IDENTIFIER);
 	begin_symbols_fact = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_ODD, SYM_NOT, SYM_NULL);
 	err = cc = cx = ll = 0; // initialize global variables
@@ -1725,18 +1652,18 @@ void main ()
 	//set1 is the end symbols
 	set1 = createset(SYM_PERIOD,SYM_END, SYM_NULL);
 	//set2 is the start symbols
-	set2 = uniteset(begin_symbols_declaration, begin_symbols_statement);
-	set = uniteset(set1, set2);
+	set2 = symset_unite(begin_symbols_declaration, begin_symbols_statement);
+	set = symset_unite(set1, set2);
 	block(set);
-	getsym();
-	destroyset(set1);
-	destroyset(set2);
-	destroyset(set);
-	destroyset(phi);
-	destroyset(symbols_relation);
-	destroyset(begin_symbols_declaration);
-	destroyset(begin_symbols_statement);
-	destroyset(begin_symbols_fact);	
+//	getsym();
+	symset_destroy(set1);
+	symset_destroy(set2);
+	symset_destroy(set);
+	symset_destroy(phi);
+	symset_destroy(symbols_relation);
+	symset_destroy(begin_symbols_declaration);
+	symset_destroy(begin_symbols_statement);
+	symset_destroy(begin_symbols_fact);	
 	if (sym != SYM_PERIOD)
 		error(9); // '.' expected.
 	if (err == 0)
