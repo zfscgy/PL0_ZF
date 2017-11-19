@@ -125,8 +125,8 @@ enum oprcode
 };
 enum jmpcode
 {
-	J_Z = 1,
-	J_NZ = -1,
+	J_Z = -1,
+	J_NZ = 1,
 	J_POS = 2,
 	J_GRT = 10,
 	J_GRE = 11,
