@@ -1,5 +1,9 @@
 ﻿  pl0.c
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(642): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(802): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1106): warning C4101: “cx4”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(660): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(820): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1033): warning C4101: “left_instruction_len”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1033): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1034): warning C4101: “cx1”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1113): warning C4101: “cx4”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1113): warning C4101: “cx3”: 未引用的局部变量
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.exe

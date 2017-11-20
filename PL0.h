@@ -90,6 +90,8 @@ enum opcode
 	LODS,
 	STO,
 	STOS,
+	LODSA,
+	STOSA,
 	LDA,
 	CAL,
 	INT,
@@ -233,7 +235,7 @@ int ssym[NSYM + 1] =
 
 
 
-#define MAXINS   13
+#define MAXINS   15
 #define MAXD	 4
 char* mnemonic[MAXINS] =
 {
@@ -243,6 +245,8 @@ char* mnemonic[MAXINS] =
 	"LODS", 
 	"STO",
 	"STOS",
+	"LODSA",
+	"STOSA",
 	"LDA",
 	"CAL",
 	"INT",

@@ -573,21 +573,25 @@ void expr_self(symset fsys)
 		{
 			error_s("The expression is not a left value.");
 		}
+		else if (code[cx - 1].f == LODS)
+		{
+			code[cx - 1].f = LODSA;
+		}
 		switch (selfsym)
 		{
 		case SYM_DEC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
-			gen(code[cx - 3].f + 2, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
 			gen(POP, 0, 1);
-			gen(code[cx - 5].f, 0, code[cx - 5].a);
+			gen(code[cx - 5].f == LODSA ? LODS : LOD, 0, code[cx - 5].a);
 			break;
 		case SYM_INC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
-			gen(code[cx - 3].f + 2, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
 			gen(POP, 0, 1);
-			gen(code[cx - 5].f, 0, code[cx - 5].a);
+			gen(code[cx - 5].f == LODSA ? LODS : LOD, 0, code[cx - 5].a);
 			break;
 		case SYM_BITAND:
 			if (code[cx - 1].f == LOD)
@@ -615,19 +619,33 @@ void expr_self(symset fsys)
 		{
 			error_s("The expression is not a left value.");
 		}
+		if (code[cx - 1].f == LODS)
+		{
+			code[cx - 1].f = LODSA;
+		}
 		switch (sym)
 		{
 		case SYM_INC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
-			gen(code[cx - 3].f + 2, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
+			if (code[cx - 3].f == LODSA)
+			{
+				gen(POP, 0, 1);
+				gen(LODS, 0, 0);
+			}
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
 			break;
 		case SYM_DEC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
-			gen(code[cx - 3].f + 2, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
+			if (code[cx - 3].f == LODSA)
+			{
+				gen(POP, 0, 1);
+				gen(LODS, 0, 0);
+			}
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
 			break;
@@ -842,7 +860,7 @@ void expr_condition_and(symset fsys,int *false_list,int *false_list_size,int *tr
 {
 	void expr_condition_or(symset,int*,int*,int*,int*);
 	int i;
-	if (sym != SYM_LPAREN)
+	if (1)//sym != SYM_LPAREN)
 	{
 		expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 		gen(JPC, J_Z, 0);
@@ -868,7 +886,7 @@ void expr_condition_and(symset fsys,int *false_list,int *false_list_size,int *tr
 		}
 		*true_list_size = 0;
 		getsym();
-		if (sym != SYM_LPAREN)
+		if (1)//sym != SYM_LPAREN)
 		{
 			expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
 			gen(JPC, J_Z, 0);
@@ -1022,27 +1040,16 @@ void expr_assignment(symset fsys)
 		getsym();
 		if (code[cx - 1].f == LOD || code[cx - 1].f == LODS)
 		{
-			cx1 = cx;
-			left_instruction_len = cx1 - cx0;
-			if (left_instruction_len > 10)
-			{
-				error_s("Left value cannot have more than 10 instructions to generate address.");
-			}
-			for (i = 0; i < left_instruction_len; i++)
-			{
-				leftlod[i] = code[cx0 + i];
-			}
-			for (i = cx0; i < cx1; i++)
-			{
-				code[i] = code[i + left_instruction_len];
-			}
-			cx -= left_instruction_len;
+			leftlod[0] = code[cx - 1];
+			cx--;
 			expr_assignment(fsys);
-			for (i = 0; i < left_instruction_len; i++)
-			{
-				code[cx++] = leftlod[i];
-			}
+			code[cx++] = leftlod[0];
 			code[cx - 1].f += 2;
+			if (code[cx - 1].f == STOS)
+			{
+				gen(POP, 0, 1);
+				gen(LODS, 0, 0);
+			}
 		}
 		else
 		{
@@ -1248,6 +1255,11 @@ void statement(symset fsys,int *break_list,int *break_list_size,int *continue_li
 		getsym();
 		cx1 = cx;  //Here cx1 is the beginning of expr2
 		expr_condition_or(fsys, current_true_list, &current_true_list_size, current_false_list, &current_false_list_size);
+		for (i = 0; i < current_true_list_size; i++)
+		{
+			code[current_true_list[i]].a = cx;
+		}
+		gen(JMP, 0, 0);
 		if (sym != SYM_SEMICOLON)
 		{
 			error_s("Expect ';' after for loop's condition");
@@ -1256,14 +1268,15 @@ void statement(symset fsys,int *break_list,int *break_list_size,int *continue_li
 		cx2 = cx; // expr3, mostly incremental
 		expr_assignment(fsys);
 		gen(POP, 0, 1);
+		gen(JMP, 0, cx1);
 		if (sym != SYM_RPAREN)
 		{
 			error_s("Expect ')' after 'for(expr1;expr2;expr3)'");
 		}
 		getsym();
-		cx3 = cx; // begin of statement
+		code[cx2 - 1].a = cx;
 		statement(fsys, current_break_list, &current_break_list_size, current_continue_list, &current_continue_list_size);
-		gen(JMP, 0, cx1);
+		gen(JMP, 0, cx2);
 		for (i = 0; i < current_false_list_size; i++)
 		{
 			code[current_false_list[i]].a = cx;
@@ -1647,9 +1660,12 @@ void interpret()
 			break;
 		case STOS:
 			printf("Store to Addr:%d   %d\n", i.a, base(stack, b, i.l) + i.a + stack[top - 1]);
-			stack[base(stack, b, i.l) + i.a + stack[top]] = stack[top - 1];
+			stack[base(stack, b, i.l) + i.a + stack[top - 1]] = stack[top];
 			printf("%d\n", stack[top]);
-			top --; 
+			break;
+		case LODSA:
+			stack[top + 1] = stack[base(stack, b, i.l) + i.a + stack[top]];
+			top++;
 			break;
 		case LDA:
 			stack[++top] = base(stack, b, i.l) + i.a;
