@@ -26,10 +26,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pl0.c">
+    <ClCompile Include="set.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="set.c">
+    <ClCompile Include="pl0.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -12,7 +12,9 @@
 #include "set.h"
 void mytest()
 {
-	int i = 2;
+	int i = 0;
+	int j = (i = 1) + (i = 2);
+	printf("%d\n", j);
 }
 
 void error(int n)
@@ -582,16 +584,16 @@ void expr_self(symset fsys)
 		case SYM_DEC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
-			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, code[cx - 3].l, code[cx - 3].a);
 			gen(POP, 0, 1);
-			gen(code[cx - 5].f == LODSA ? LODS : LOD, 0, code[cx - 5].a);
+			gen(code[cx - 5].f == LODSA ? LODS : LOD, code[cx - 5].l, code[cx - 5].a);
 			break;
 		case SYM_INC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
-			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
+			gen(code[cx - 3].f == LODSA ? STOS : STO, code[cx - 3].l, code[cx - 3].a);
 			gen(POP, 0, 1);
-			gen(code[cx - 5].f == LODSA ? LODS : LOD, 0, code[cx - 5].a);
+			gen(code[cx - 5].f == LODSA ? LODS : LOD, code[cx - 5].l, code[cx - 5].a);
 			break;
 		case SYM_BITAND:
 			if (code[cx - 1].f == LOD)
@@ -628,11 +630,11 @@ void expr_self(symset fsys)
 		case SYM_INC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
-			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
-			if (code[cx - 3].f == LODSA)
+			gen(code[cx - 3].f == LODSA ? STOS : STO, code[cx - 3].l, code[cx - 3].a);
+			if (code[cx - 4].f == LODSA)
 			{
 				gen(POP, 0, 1);
-				gen(LODS, 0, 0);
+				gen(LODS, code[cx - 5].l, code[cx - 5].a);
 			}
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
@@ -640,11 +642,11 @@ void expr_self(symset fsys)
 		case SYM_DEC:
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_MIN);
-			gen(code[cx - 3].f == LODSA ? STOS : STO, 0, code[cx - 3].a);
-			if (code[cx - 3].f == LODSA)
+			gen(code[cx - 3].f == LODSA ? STOS : STO, code[cx - 3].l, code[cx - 3].a);
+			if (code[cx - 4].f == LODSA)
 			{
 				gen(POP, 0, 1);
-				gen(LODS, 0, 0);
+				gen(LODS, code[cx - 5].l, code[cx - 5].a);
 			}
 			gen(LIT, 0, 1);
 			gen(OPR, 0, OPR_ADD);
@@ -655,15 +657,15 @@ void expr_self(symset fsys)
 }
 void expr_factor(symset fsys)
 {
-	void expr_anyvalue(symset fsys);
+	void expr_assignment(symset fsys);
 	void expr_function(int i);
 	int i;
 	symset set;
 	if (sym == SYM_LPAREN)
 	{
 		getsym();
-		set = symset_unite(createset(SYM_RPAREN, SYM_NULL), fsys);
-		expr_anyvalue(set);
+		set = createset(SYM_RPAREN, SYM_NULL);
+		expr_assignment(set);
 		symset_destroy(set);
 		if (sym == SYM_RPAREN)
 		{
@@ -856,74 +858,112 @@ void check_branch()
 		}
 	}
 }
-void expr_condition_and(symset fsys,int *false_list,int *false_list_size,int *true_list, int *true_list_size)
+void expr_condition_and(symset fsys, int *false_list, int *false_list_size, int *true_list, int *true_list_size)
 {
-	void expr_condition_or(symset,int*,int*,int*,int*);
+	void expr_condition_or(symset, int*, int*, int*, int*);
 	int i;
-	if (1)//sym != SYM_LPAREN)
+	int inner_true_list[30];
+	int inner_true_list_size = 0;
+	int cx0, cx1, cx2;
+	cx0 = cx;
+	expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
+	if (code[cx - 1].f == LIT && code[cx - 1].a == 0
+		&& code[cx - 2].f == JMP && code[cx - 2].a == cx
+		&& code[cx - 3].f == LIT && code[cx - 3].a == 1)
 	{
-		expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
+		for (i = cx0; i < cx - 3; i++)
+		{
+			if (code[i].f == JPC)
+			{
+				if (code[i].a == cx - 3)
+				{
+					inner_true_list[inner_true_list_size++] = i;
+				}
+				if (code[i].a == cx - 1)
+				{
+					false_list[(*false_list_size)++] = i;
+				}
+			}
+		}
+		cx -= 3;
+	}
+	else
+	{
 		gen(JPC, J_Z, 0);
 		check_branch();
 		false_list[(*false_list_size)++] = cx - 1;
 	}
-	else
-	{
-		getsym();
-		expr_condition_or(symset_unite(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, true_list_size, false_list, false_list_size);
-		for (i = 0; i < *true_list_size; i++)
-		{
-			code[true_list[i]].a = cx;
-		}
-		getsym();
-	}
 	while (sym == SYM_AND)
 	{
-		if (*true_list_size > 1)
+		for (i = 0; i < inner_true_list_size; i++)
 		{
-			code[cx - 1].l = -code[cx - 1].l;
-			false_list[(*false_list_size)++] = cx - 1;
+			code[inner_true_list[i]].a = cx;
 		}
-		*true_list_size = 0;
+		inner_true_list_size = 0;
 		getsym();
-		if (1)//sym != SYM_LPAREN)
+		cx0 = cx;
+		expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
+		if (code[cx - 1].f == LIT &&code[cx - 1].a == 0
+			&& code[cx - 2].f == JMP && code[cx - 2].a == cx
+			&& code[cx - 3].f == LIT && code[cx - 3].a == 1)
 		{
-			expr_bit_or(symset_unite(fsys, createset(SYM_AND, SYM_NULL)));
+			for (i = cx0; i < cx - 3; i++)
+			{
+				if (code[i].f == JPC)
+				{
+					if (code[i].a == cx - 3)
+					{
+						inner_true_list[inner_true_list_size++] = i;
+					}
+					else if (code[i].a == cx - 1)
+					{
+						false_list[(*false_list_size)++] = i;
+					}
+				}
+			}
+			cx -= 3;
+		}
+		else
+		{
 			gen(JPC, J_Z, 0);
 			check_branch();
 			false_list[(*false_list_size)++] = cx - 1;
 		}
-		else
-		{
-			getsym();
-			expr_condition_or(symset_unite(fsys, createset(SYM_RPAREN, SYM_NULL)), true_list, true_list_size, false_list, false_list_size);
-			for (i = 0; i < *true_list_size; i++)
-			{
-				code[true_list[i]].a = cx;
-			}
-			getsym();
-		} 
-	};
+	}
+	for (i = 0; i < inner_true_list_size; i++)
+	{
+		true_list[(*true_list_size)++] = inner_true_list[i];
+	}
 }
 void expr_condition_or(symset fsys,int *true_list,int *true_list_size, int *false_list, int *false_list_size)
 {
 	int i;
-	expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)), false_list, false_list_size, 
+	int inner_false_list[30];
+	int inner_false_list_size = 0;
+	expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)),inner_false_list,&inner_false_list_size, 
 		true_list, true_list_size);
 	check_branch();
 	while (sym == SYM_OR)
 	{
-		for (i = 0; i < *false_list_size; i++)
+		if (inner_false_list_size > 0)
 		{
-			code[false_list[i]].a = cx;
+			inner_false_list_size--;
+			code[cx - 1].l = -code[cx - 1].l;
+			true_list[(*true_list_size)++] = cx - 1;
 		}
-		code[cx - 1].l = -code[cx - 1].l;
-		true_list[(*true_list_size)++] = cx - 1;
+		for (i = 0; i < inner_false_list_size; i++)
+		{
+			code[inner_false_list[i]].a = cx;
+		}
 		getsym();
-		*false_list_size = 0;
-		expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)), false_list, false_list_size, true_list, true_list_size);
+		inner_false_list_size = 0;
+		expr_condition_and(symset_unite(fsys, createset(SYM_OR, SYM_NULL)), inner_false_list, &inner_false_list_size, true_list, true_list_size);
 		check_branch();
-	};
+	}
+	for (i = 0; i < inner_false_list_size; i++)
+	{
+		false_list[(*false_list_size)++] = inner_false_list[i];
+	}
 }
 void expr_anyvalue(symset fsys)
 {
@@ -939,6 +979,10 @@ void expr_anyvalue(symset fsys)
 	else
 	{
 		int i;
+		for (i = 0; i < true_list_size; i++)
+		{
+			code[true_list[i]].a = cx;
+		}
 		gen(LIT, 0, 1);
 		gen(JMP, 0, cx + 2);
 		gen(LIT, 0, 0);
@@ -1048,7 +1092,7 @@ void expr_assignment(symset fsys)
 			if (code[cx - 1].f == STOS)
 			{
 				gen(POP, 0, 1);
-				gen(LODS, 0, 0);
+				gen(LODS, code[cx - 2].l, code[cx - 2].a);
 			}
 		}
 		else
@@ -1144,12 +1188,12 @@ void statement(symset fsys,int *break_list,int *break_list_size,int *continue_li
 		{
 			error_s("Expected ')' after condition");
 		}
-		statement(symset_unite(fsys, createset(SYM_ELSE, SYM_NULL)), break_list, break_list_size, continue_list, continue_list_size);
+		statement(symset_unite(fsys, createset(SYM_ELSE,SYM_ELIF, SYM_NULL)), break_list, break_list_size, continue_list, continue_list_size);
 		for (i = 0; i < false_list_size; i++)
 		{
 			code[false_list[i]].a = cx;
 		}
-		if (sym ==  SYM_ELSE)
+		if (sym == SYM_ELSE || sym == SYM_ELIF)
 		{
 			for (i = 0; i < false_list_size; i++)
 			{
@@ -1157,7 +1201,14 @@ void statement(symset fsys,int *break_list,int *break_list_size,int *continue_li
 			}
 			cx1 = cx;
 			gen(JMP, 0, 0);
-			getsym();
+			if (sym == SYM_ELSE)
+			{
+				getsym();
+			}
+			else
+			{
+				sym = SYM_IF;
+			}
 			statement(fsys, break_list, break_list_size, continue_list, continue_list_size);
 			code[cx1].a = cx;
 		}
@@ -1327,13 +1378,59 @@ void statement(symset fsys,int *break_list,int *break_list_size,int *continue_li
 		getsym();
 		return;
 	}
+	else if (sym == SYM_EXIT)
+	{
+		gen(EXIT, 0, 0);
+		getsym();
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Expect ';' after exit.");
+		}
+		getsym();
+	}
+	else if (sym == SYM_PRINT)
+	{
+		getsym();
+		if (sym != SYM_LPAREN)
+		{
+			error_s("Expect '(' after 'print'.");
+		}
+		getsym();
+		if (sym != SYM_RPAREN)
+		{
+			int printnum = 0;
+			expr_anyvalue(fsys);
+			printnum++;
+			while (sym == SYM_COMMA)
+			{
+				getsym();
+				expr_anyvalue(fsys);
+				printnum++;
+			}
+			if (sym != SYM_RPAREN)
+			{
+				error_s("Expect ')' at the end of param list.");
+			}
+			gen(PRT, 0, printnum);
+		}
+		else
+		{
+			gen(PRT, -1, 0);
+		}
+		getsym();
+		if (sym != SYM_SEMICOLON)
+		{
+			error_s("Expect ';' at the end of print statement.");
+		}
+		getsym();
+	}
 	else
 	{
 		expr_assignment(fsys);
 		gen(POP, 0, 1);
 		if (sym != SYM_SEMICOLON)
 		{
-			error_s("Expect ';' in the end of statement.");
+			error_s("Expect ';' in the end of print statement.");
 		}
 		getsym();
 	}
@@ -1533,7 +1630,7 @@ void interpret()
 	stack[1] = stack[2] = stack[3] = 0;
 	do
 	{
-		printf("pc: %d\n", pc);
+		//printf("pc: %d\n", pc);
 		i = code[pc++];
 		switch (i.f)
 		{
@@ -1544,6 +1641,13 @@ void interpret()
 			break;
 		case LIT:
 			stack[++top] = i.a;
+			break;
+		case RET:
+			top = b + 2;
+			pc = stack[top];
+			top--;
+			b = stack[top];
+			top -= (i.l + 1);
 			break;
 		case OPR:
 			switch (i.a) // operator
@@ -1561,6 +1665,7 @@ void interpret()
 				top--;
 				b = stack[top];
 				top -= (i.l + 1);
+//				printf("\nretu rn: %d\n", stack[top]);
 				break;
 			case OPR_NEG:
 				stack[top] = -stack[top];
@@ -1654,14 +1759,14 @@ void interpret()
 			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
 			break;
 		case STO:
-			printf("Store to Addr:%d   %d\n",i.a, base(stack, b, i.l) + i.a);
+			//printf("Store to Addr:%d   %d\n",i.a, base(stack, b, i.l) + i.a);
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			printf("%d\n", stack[top]);
+			//printf("%d\n", stack[top]);
 			break;
 		case STOS:
-			printf("Store to Addr:%d   %d\n", i.a, base(stack, b, i.l) + i.a + stack[top - 1]);
+			//printf("Store to Addr:%d   %d\n", i.a, base(stack, b, i.l) + i.a + stack[top - 1]);
 			stack[base(stack, b, i.l) + i.a + stack[top - 1]] = stack[top];
-			printf("%d\n", stack[top]);
+			//printf("%d\n", stack[top]);
 			break;
 		case LODSA:
 			stack[top + 1] = stack[base(stack, b, i.l) + i.a + stack[top]];
@@ -1685,6 +1790,21 @@ void interpret()
 			break;
 		case JMP:
 			pc = i.a;
+			break;
+		case EXIT:
+			pc = 0;
+			break;
+		case PRT:
+			if (i.l == -1)
+				printf("\n");
+			else
+			{
+				int printcount = i.a;
+				for (; printcount > 0; printcount--)
+				{
+					printf("%d\t", stack[top - printcount + 1]);
+				}
+			}
 			break;
 		case JPC:
 			switch (i.l)
@@ -1737,15 +1857,15 @@ void interpret()
 			}
 			break;
 		} // switch
-		printf("%s %d %d\n", mnemonic[i.f], i.l, i.a);
+/*		printf("%s %d %d\n", mnemonic[i.f], i.l, i.a);
 		printf("----------Stack-----------\n");
-		for (size_t si = 0; si < 15; si++)
+		for (size_t si = 0; si < 30; si++)
 		{
 			printf(" %8d", stack[si]);
 			if (top == si) printf("   <--top");
 			if (b == si) printf("   <--base");
 			printf("\n");
-		}
+		}*/
 	}
 	while (pc);
 
@@ -1777,7 +1897,7 @@ void main ()
 	begin_symbols_declaration = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
 	begin_symbols_statement = createset(SYM_BEGIN, SYM_IDENTIFIER, SYM_BITAND, SYM_TIMES,
 		SYM_IF, SYM_FOR, SYM_WHILE, SYM_SEMICOLON, SYM_BREAK, SYM_CONTINUE,
-		SYM_INC, SYM_DEC, SYM_NULL);
+		SYM_INC, SYM_DEC,SYM_RETURN, SYM_PRINT, SYM_NULL);
 	begin_symbols_primeexpr = createset(SYM_NUMBER,SYM_IDENTIFIER);
 	begin_symbols_fact = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_ODD, SYM_NOT, SYM_NULL);
 	err = cc = cx = ll = 0; // initialize global variables

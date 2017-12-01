@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define NRW        17     // number of reserved words
+#define NRW        19     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       17     // maximum number of symbols in array ssym and csym
@@ -72,6 +72,9 @@ enum symtype
 	SYM_BREAK,
 	SYM_CONTINUE,
 	SYM_AT,
+
+	SYM_EXIT,
+	SYM_PRINT,
 };
 
 enum idtype
@@ -97,8 +100,11 @@ enum opcode
 	INT,
 	JMP,
 	JPC,
-	MOV,
-	POP
+	MOV,//Depericated
+	POP,
+	RET,
+	EXIT,
+	PRT,
 };
 
 enum oprcode
@@ -207,7 +213,7 @@ char* word[NRW + 1] =
 	"", /* place holder */
 	"begin", "call", "const", "do", "end","if",
 	"odd", "procedure", "then", "var", "while",
-	"else", "elif", "return", "for","break","continue",
+	"else", "elif", "return", "for","break","continue","exit","print",
 };
 //ZF note
 //This array contains all Symbols corresponding to the reserved word
@@ -216,7 +222,7 @@ int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,
-	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,SYM_BREAK,SYM_CONTINUE,
+	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,SYM_BREAK,SYM_CONTINUE,SYM_EXIT,SYM_PRINT,
 };
 
 char csym[NSYM + 1] =
@@ -235,7 +241,7 @@ int ssym[NSYM + 1] =
 
 
 
-#define MAXINS   15
+#define MAXINS   18
 #define MAXD	 4
 char* mnemonic[MAXINS] =
 {
@@ -254,6 +260,9 @@ char* mnemonic[MAXINS] =
 	"JPC",
 	"MOV",
 	"POP",
+	"RET",
+	"EXIT",
+	"PRINT",
 };
 
 typedef struct
