@@ -1,15 +1,15 @@
 #include <stdio.h>
 
-#define NRW        19     // number of reserved words
+#define NRW        24     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       17     // maximum number of symbols in array ssym and csym
+#define NSYM       22     // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
-#define CXMAX      500    // size of code array
-
+#define CXMAX      800    // size of code array
+#define LINEMAX	   500    // maximum line number
 #define MAXSYM     30     // maximum number of symbols  
 
 #define STACKSIZE  1000   // maximum storage
@@ -20,6 +20,7 @@ enum symtype
 	SYM_IDENTIFIER,
 	SYM_CONST,		// const
 	SYM_VAR,		// var
+	SYM_PTR,
 	SYM_PROCEDURE,	// procedure
 	SYM_NUMBER,		// 0123456789
 	SYM_PLUS,		// +
@@ -56,13 +57,19 @@ enum symtype
 	SYM_COMMA,		// ,
 	SYM_SEMICOLON,	// ;
 	SYM_PERIOD,		// .
-	SYM_BECOMES,	// :=
+	SYM_QUESTION,	// ?
+	SYM_BECOMES,	// :=,=
+	SYM_COLON,
     SYM_BEGIN,		// begin     
 	SYM_END,		// end
 	SYM_IF,			// if
 	SYM_THEN,		// then
 	SYM_WHILE,		// while
 	SYM_DO,			// do
+	SYM_SWITCH,
+	SYM_CASE,
+	SYM_DEFAULT,
+	SYM_GOTO,
 	SYM_CALL,		// call
 
 	SYM_ELSE,		// else
@@ -75,6 +82,10 @@ enum symtype
 
 	SYM_EXIT,
 	SYM_PRINT,
+	SYM_RANDOM,
+
+	SYM_LBRACE,
+	SYM_RBRACE,
 };
 
 enum idtype
@@ -83,6 +94,9 @@ enum idtype
 	ID_VARIABLE,
 	ID_PROCEDURE,
 	ID_ARRAY, 
+	ID_PTR,
+	ID_FPTR,
+	ID_TAG,
 };
 
 enum opcode
@@ -96,7 +110,9 @@ enum opcode
 	LODSA,
 	STOSA,
 	LDA,
+	LDFUN,
 	CAL,
+	CALS, //JMP TO ADDRESS 
 	INT,
 	JMP,
 	JPC,
@@ -105,6 +121,8 @@ enum opcode
 	RET,
 	EXIT,
 	PRT,
+	LPC,
+	SYS,
 };
 
 enum oprcode
@@ -130,6 +148,8 @@ enum oprcode
 	OPR_XOR,
 	OPR_MOD,
 	OPR_BITNOT,
+	OPR_SHR,
+	OPR_SHL,
 };
 enum jmpcode
 {
@@ -141,7 +161,15 @@ enum jmpcode
 	J_EQU = 12,
 	J_LEQ = -10,
 	J_LES = -11,
-	J_NEQ  = -12,
+	J_NEQ = -12,
+	J_NEQS = 20,
+};
+
+enum intcode
+{
+	SYS_PRT,
+	SYS_RAN,
+	SYS_CALSTK,
 };
 
 typedef struct
@@ -196,52 +224,64 @@ char id[MAXIDLEN + 1]; // last identifier read
 int  num;        // last number read
 int  cc;         // character count
 int  ll;         // line length
+int line_count;
 int  kk;
 int  err;
 int  cx;         // index of current instruction to be generated.
+int start_cx = 100;
 int  level = 0;
 int  tx = 0;
 unsigned char arrayInfo[5]; //current array
 char line[300];
 int para_num;
-
+int cx_line[CXMAX];
+char line_code[LINEMAX][300];
 instruction code[CXMAX];
+
+//
+int is_debug = 0;
 //ZF note
 //This array contains all reserved word
 char* word[NRW + 1] =
 {
 	"", /* place holder */
-	"begin", "call", "const", "do", "end","if",
+	"begin", "call", "const", "do", "end",
+	"if","switch","case","default","goto",
 	"odd", "procedure", "then", "var", "while",
 	"else", "elif", "return", "for","break","continue","exit","print",
+	"ptr",
 };
 //ZF note
 //This array contains all Symbols corresponding to the reserved word
 //They must be in the same order
 int wsym[NRW + 1] =
 {
-	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
-	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,
+	SYM_NULL, 
+	SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
+	SYM_IF, SYM_SWITCH, SYM_CASE,SYM_DEFAULT,SYM_GOTO,
+	SYM_ODD, SYM_PROCEDURE,SYM_THEN, SYM_VAR, SYM_WHILE,
 	SYM_ELSE, SYM_ELIF, SYM_RETURN, SYM_FOR,SYM_BREAK,SYM_CONTINUE,SYM_EXIT,SYM_PRINT,
+	SYM_PTR
 };
 
 char csym[NSYM + 1] =
 {
 	' ', '+', '-', '*', '/', '(', ')', ',', '.', ';',
-	'[',']','!','&','|','^','%'
+	'[',']','!','~','&','|','^','%','{','}',':','=','?',
 };
 
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
 	SYM_LPAREN, SYM_RPAREN, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
-	SYM_LBRACKET,SYM_RBRACKET,SYM_NOT,
+	SYM_LBRACKET,SYM_RBRACKET,SYM_NOT,SYM_BITNOT,
 	SYM_BITAND,SYM_BITOR,SYM_XOR,SYM_MOD,
+	SYM_LBRACE,SYM_RBRACE,SYM_COLON,SYM_BECOMES,SYM_QUESTION,
 };
 
 
 
-#define MAXINS   18
+#define MAXINS   23
 #define MAXD	 4
 char* mnemonic[MAXINS] =
 {
@@ -254,7 +294,9 @@ char* mnemonic[MAXINS] =
 	"LODSA",
 	"STOSA",
 	"LDA",
+	"LDFUN",
 	"CAL",
+	"CALS",
 	"INT",
 	"JMP",
 	"JPC",
@@ -263,6 +305,8 @@ char* mnemonic[MAXINS] =
 	"RET",
 	"EXIT",
 	"PRINT",
+	"LPC",
+	"SYS",
 };
 
 typedef struct

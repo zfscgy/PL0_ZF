@@ -1,11 +1,15 @@
 ﻿  pl0.c
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(662): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(822): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(867): warning C4101: “cx2”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(867): warning C4101: “cx1”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1077): warning C4101: “left_instruction_len”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1077): warning C4101: “i”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1078): warning C4101: “cx1”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1157): warning C4101: “cx4”: 未引用的局部变量
-d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1157): warning C4101: “cx3”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(16): warning C4047: “初始化”:“int *”与“int (*)[10]”的间接级别不同
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(895): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(896): warning C4101: “set”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1095): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1140): warning C4101: “cx2”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1140): warning C4101: “cx1”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1419): warning C4101: “left_instruction_len”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1419): warning C4101: “i”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1420): warning C4101: “cx1”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1526): warning C4101: “cx4”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(1526): warning C4101: “cx3”: 未引用的局部变量
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(2372): warning C4013: “time”未定义；假设外部返回 int
+d:\mydoc\schoolcourses\3_编译原理\pl0\pl0_zf\pl0_zf\pl0.c(2359): warning C4716: “callstack”: 必须返回一个值
   PL0_ZF.vcxproj -> D:\MyDoc\SchoolCourses\3_编译原理\pl0\PL0_ZF\x64\Debug\PL0_ZF.exe
